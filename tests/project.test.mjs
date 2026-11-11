@@ -2,8 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 
-const root = new URL('../', import.meta.url);
+const rootPath = fileURLToPath(new URL('../', import.meta.url));
 const manifest = JSON.parse(await readFile(
   new URL('../extensions/veylora-core/package.json', import.meta.url), 'utf8'
 ));
@@ -24,8 +25,8 @@ test('Veylora contributes a first-party activity bar view and theme', () => {
 
 test('the upstream Code - OSS source is pinned as a submodule', async () => {
   const modules = await readFile(new URL('../.gitmodules', import.meta.url), 'utf8');
-  assert.match(modules, /path = vendor\\/code-oss/);
-  assert.match(modules, /https:\\/\\/github\\.com\\/microsoft\\/vscode\\.git/);
+  assert.ok(modules.includes('path = vendor/code-oss'));
+  assert.ok(modules.includes('url = https://github.com/microsoft/vscode.git'));
 });
 
 test('cross-platform development commands point to Node orchestration scripts', () => {
@@ -41,10 +42,11 @@ test('all Veylora Node orchestration scripts parse successfully', () => {
     'scripts/launch.mjs',
     'scripts/apply-branding.mjs'
   ]) {
-    const result = spawnSync(process.execPath, ['--check', new URL('../' + script, import.meta.url)], {
-      cwd: new URL('../', import.meta.url),
-      encoding: 'utf8'
-    });
+    const result = spawnSync(
+      process.execPath,
+      ['--check', fileURLToPath(new URL('../' + script, import.meta.url))],
+      { cwd: rootPath, encoding: 'utf8' }
+    );
     assert.equal(result.status, 0, result.stderr || script);
   }
 });
