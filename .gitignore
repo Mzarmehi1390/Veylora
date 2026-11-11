@@ -25,3 +25,16 @@ Thumbs.db
 build/
 dist/
 *.egg-info/
+
+# Node.js / extension build outputs
+node_modules/
+**/node_modules/
+extensions/veylora-core/dist/
+*.vsix
+
+# Code - OSS generated files (the submodule itself remains tracked)
+vendor/code-oss/.build/
+vendor/code-oss/out/
+vendor/code-oss/.vscode-test/
+vendor/code-oss/.vscode-oss/
+vendor/code-oss/.vscode-oss-shared/
