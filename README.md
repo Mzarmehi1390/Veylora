@@ -2,50 +2,57 @@
 
 **Code Beyond Limits.**
 
-Veylora is an experimental, desktop-first code editor built with Python and PyQt6. The repository currently contains the migrated prototype; the next development goal is to evolve it into a modular, testable IDE with a reliable editing core and a polished developer workflow.
+Veylora is an experimental desktop IDE built with Python and PyQt6. The project is being evolved from a single-file prototype into a modular application with clear boundaries and automated quality checks.
 
-## Current prototype capabilities
+## Current capabilities
 
-- Multi-tab text editing
+- Multi-tab editing with line numbers and current-line highlighting
 - Basic Python, JavaScript, and Markdown syntax highlighting
-- Word completion and automatic bracket pairing
-- File-system explorer
-- Integrated terminal sessions
-- Basic Git status and commit panel
-- Markdown preview
-- Run the active Python file
+- Automatic bracket and quote pairing
+- Workspace file explorer
+- Save, Save As, and unsaved-change protection
+- Run the active Python file and view process output
+- Dark desktop theme
 
-> This is an early prototype, not yet a feature-complete replacement for Visual Studio Code. Language intelligence, debugging, extension APIs, robust terminal emulation, and advanced source-control workflows remain future work.
+This is an early-stage IDE, not yet a feature-complete replacement for Visual Studio Code. Language Server Protocol support, debugging, extension APIs, a full terminal emulator, and advanced source control are planned areas of development.
 
 ## Requirements
 
 - Python 3.10+
-- PyQt6
-- Git (optional; required for the source-control panel)
+- PyQt6 6.6+
 
-## Run from source
+## Run
 
 ```bash
 python -m venv .venv
+# Activate the environment, then:
+python -m pip install -r requirements.txt
+python -m veylora
 ```
 
-Activate the virtual environment, then install dependencies:
+The backward-compatible launcher is also available with `python main.py`.
+
+## Development checks
 
 ```bash
-python -m pip install -r requirements.txt
-python main.py
+python -m compileall -q main.py veylora tests
+ruff check .
+pytest
 ```
 
-## Project direction
+## Architecture
 
-The codebase will be progressively organized around clear boundaries:
+```text
+veylora/
+  app.py                 Application bootstrap
+  editor/
+    code_editor.py       Editing widget and line-number gutter
+    highlighting.py      Lightweight language highlighting
+  services/              Application services
+  ui/
+    main_window.py       Main window and user workflows
+tests/                   Automated tests
+legacy/                  Original prototype retained for reference
+```
 
-- **Application shell:** window composition, menus, commands, and lifecycle
-- **Editor:** document models, tabs, editing behavior, and language services
-- **Workspace:** project discovery and file navigation
-- **Terminal:** process lifecycle and output handling
-- **Source control:** Git operations and repository state
-- **Services:** settings, logging, and shared infrastructure
-- **Tests:** isolated unit and integration coverage
-
-Architecture changes will preserve working behavior where practical and add automated checks before larger refactors.
+Editor behavior, language tooling, workspace services, terminal execution, and source control will evolve as independent modules.
