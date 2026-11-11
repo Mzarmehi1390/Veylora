@@ -1,0 +1,25 @@
+{
+  "name":"veylora-core","displayName":"Veylora Core",
+  "description":"First-party workspace, onboarding and diagnostics features for Veylora IDE.",
+  "version":"0.2.0","publisher":"veylora","license":"MIT",
+  "engines":{"vscode":"^1.147.0"},
+  "categories":["Other","Visualization"],"activationEvents":["onStartupFinished"],
+  "main":"./dist/extension.js",
+  "contributes":{
+    "commands":[
+      {"command":"veylora.openDashboard","title":"Veylora: Open Dashboard"},
+      {"command":"veylora.createWorkspaceConfig","title":"Veylora: Initialize Workspace"},
+      {"command":"veylora.showDiagnostics","title":"Veylora: Show Runtime Diagnostics"},
+      {"command":"veylora.openSettings","title":"Veylora: Open Settings"}
+    ],
+    "viewsContainers":{"activitybar":[{"id":"veylora","title":"Veylora","icon":"resources/veylora.svg"}]},
+    "views":{"veylora":[{"id":"veylora.workspace","name":"Workspace","type":"webview"}]},
+    "configuration":{"title":"Veylora","properties":{
+      "veylora.workspace.showStatusBarItem":{"type":"boolean","default":true,"description":"Show the Veylora dashboard shortcut in the status bar."}
+    }},
+    "snippets":[{"language":"python","path":"./snippets/python.json"}],
+    "themes":[{"label":"Veylora Dark","uiTheme":"vs-dark","path":"./themes/veylora-dark-color-theme.json"}]
+  },
+  "scripts":{"compile":"tsc -p ./","watch":"tsc -watch -p ./"},
+  "devDependencies":{"@types/vscode":"^1.147.0","typescript":"^5.9.3"}
+}
