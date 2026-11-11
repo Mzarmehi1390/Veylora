@@ -1,0 +1,12 @@
+{
+  "Veylora Python entry point":{
+    "prefix":"vmain",
+    "body":["def main() -> int:","    ${1:print('Hello from Veylora')}","    return 0","","","if __name__ == \"__main__\":","    raise SystemExit(main())"],
+    "description":"Create a typed Python entry point."
+  },
+  "Typed function":{
+    "prefix":"vdef",
+    "body":["def ${1:function_name}(${2:arguments}) -> ${3:None}:","    ${0:pass}"],
+    "description":"Create a typed Python function."
+  }
+}
