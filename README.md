@@ -32,7 +32,7 @@ Clone with submodules:
 ```bash
 git clone --recurse-submodules https://github.com/Mzarmehi1390/Veylora.git
 cd Veylora
-./scripts/bootstrap.sh
+npm run bootstrap
 ```
 
 Run the upstream watcher in one terminal:
