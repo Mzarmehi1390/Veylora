@@ -7,9 +7,9 @@ import sys
 from pathlib import Path
 
 from PyQt6.QtCore import QDir, QProcess, Qt
-from PyQt6.QtGui import QAction, QKeySequence
+from PyQt6.QtGui import QAction, QFileSystemModel, QKeySequence
 from PyQt6.QtWidgets import (
-    QFileDialog, QFileSystemModel, QLabel, QMainWindow, QMessageBox,
+    QFileDialog, QLabel, QMainWindow, QMessageBox,
     QPlainTextEdit, QSplitter, QTabWidget, QTreeView, QVBoxLayout, QWidget,
 )
 
