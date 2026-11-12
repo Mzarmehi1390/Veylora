@@ -40,6 +40,7 @@ test('all Veylora Node orchestration scripts parse successfully', () => {
     'scripts/bootstrap.mjs',
     'scripts/watch.mjs',
     'scripts/launch.mjs',
+    'scripts/launcher-paths.mjs',
     'scripts/apply-branding.mjs'
   ]) {
     const result = spawnSync(
