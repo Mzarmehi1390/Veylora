@@ -1,19 +1,26 @@
-import { spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { runCommand } from './process.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const upstream = resolve(root, 'vendor', 'code-oss');
 
-if (!existsSync(resolve(upstream, 'node_modules'))) {
-  throw new Error('Dependencies are missing. Run npm run bootstrap first.');
+function main() {
+  if (!existsSync(resolve(upstream, 'package.json'))) {
+    throw new Error('Code - OSS source is missing. Run npm run bootstrap from the Veylora repository root.');
+  }
+
+  if (!existsSync(resolve(upstream, 'node_modules'))) {
+    throw new Error('Code - OSS dependencies are missing. Run npm run bootstrap and wait for it to finish.');
+  }
+
+  runCommand('corepack', ['pnpm', 'run', 'watch'], { cwd: upstream });
 }
 
-const result = spawnSync('corepack', ['pnpm', 'run', 'watch'], {
-  cwd: upstream,
-  stdio: 'inherit',
-  shell: process.platform === 'win32'
-});
-if (result.error) throw result.error;
-process.exit(result.status ?? 1);
+try {
+  main();
+} catch (error) {
+  console.error(`Veylora development watcher failed: ${error.message}`);
+  process.exitCode = error.exitCode ?? 1;
+}

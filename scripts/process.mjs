@@ -1,10 +1,6 @@
 import { spawnSync } from 'node:child_process';
 
-/**
- * Run a native tool synchronously with consistent cross-platform behavior.
- * The injectable spawn function keeps process orchestration testable without
- * starting real package managers, compilers, or desktop applications.
- */
+/** Run a native tool consistently across platforms and keep execution testable. */
 export function runCommand(command, args, {
   cwd,
   stdio = 'inherit',
@@ -19,10 +15,9 @@ export function runCommand(command, args, {
   });
 
   if (result.error) {
-    throw new Error(
-      `Unable to start "${command}": ${result.error.message}`,
-      { cause: result.error }
-    );
+    throw new Error(`Unable to start "${command}": ${result.error.message}`, {
+      cause: result.error
+    });
   }
 
   if (result.status !== 0) {
