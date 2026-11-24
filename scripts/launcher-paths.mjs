@@ -16,9 +16,10 @@ export function resolveCodeOssWindowsExecutable(upstream, nameShort) {
   if (
     typeof nameShort !== 'string' ||
     !/^[A-Za-z0-9][A-Za-z0-9 ._-]*$/.test(nameShort) ||
-    /[ .]$/.test(nameShort)
+    /[ .]$/.test(nameShort) ||
+    nameShort.toLowerCase().endsWith('.exe')
   ) {
-    throw new TypeError('Code - OSS product nameShort must be a safe Windows filename.');
+    throw new TypeError('Code - OSS product nameShort must be a safe Windows filename without an extension.');
   }
 
   return resolve(upstream, '.build', 'electron', `${nameShort}.exe`);

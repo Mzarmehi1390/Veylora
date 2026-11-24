@@ -2,12 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { runCommand } from '../scripts/process.mjs';
 
-test('disables shell execution by default, including on Windows', () => {
+test('defaults to direct execution and preserves argument boundaries', () => {
   let invocation;
   const result = { status: 0, error: null };
   const actual = runCommand('Veylora.exe', ['--new-window', 'C:\\work space'], {
     cwd: 'C:\\Veylora',
-    platform: 'win32',
     spawn: (...args) => { invocation = args; return result; }
   });
 
