@@ -15,7 +15,10 @@ function main() {
     throw new Error('Code - OSS dependencies are missing. Run npm run bootstrap and wait for it to finish.');
   }
 
-  runCommand('corepack', ['pnpm', 'run', 'watch'], { cwd: upstream });
+  runCommand('corepack', ['pnpm', 'run', 'watch'], {
+    cwd: upstream,
+    shell: process.platform === 'win32'
+  });
 }
 
 try {
