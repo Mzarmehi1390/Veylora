@@ -38,7 +38,10 @@ export function createWindowsLaunchPlan({
   }
 
   const launchArgs = ['.'];
-  if (!args.includes('--extensionTestsPath')) {
+  const hasExtensionTestsPath = args.some(argument =>
+    argument === '--extensionTestsPath' || argument.startsWith('--extensionTestsPath=')
+  );
+  if (!hasExtensionTestsPath) {
     launchArgs.push('--disable-extension=vscode.vscode-api-tests');
   }
   launchArgs.push(...args, `--extensionDevelopmentPath=${extension}`);
