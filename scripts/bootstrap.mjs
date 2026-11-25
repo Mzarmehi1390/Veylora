@@ -6,7 +6,6 @@ import { runCommand } from './process.mjs';
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const upstream = resolve(root, 'vendor', 'code-oss');
 const extension = resolve(root, 'extensions', 'veylora-core');
-const usesWindowsCommandShims = process.platform === 'win32';
 
 function main() {
   runCommand('git', ['submodule', 'sync', '--recursive'], { cwd: root });
@@ -18,14 +17,8 @@ function main() {
     );
   }
 
-  runCommand('corepack', ['pnpm', 'install'], {
-    cwd: upstream,
-    shell: usesWindowsCommandShims
-  });
-  runCommand('npm', ['install'], {
-    cwd: extension,
-    shell: usesWindowsCommandShims
-  });
+  runCommand('corepack', ['pnpm', 'install'], { cwd: upstream });
+  runCommand('npm', ['install'], { cwd: extension });
   console.log('Veylora development dependencies are ready.');
 }
 

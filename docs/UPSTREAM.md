@@ -37,8 +37,6 @@ npm run dev:launch
 
 The launch command opens the Code - OSS development workbench with Veylora Core loaded.
 
-On Linux and macOS, Veylora starts the upstream `scripts/code.sh` launcher directly. On Windows, it runs the same upstream pre-launch preparation and then starts the generated Electron executable directly. This avoids forwarding user-controlled command-line arguments through `cmd.exe` and the upstream `code.bat` wrapper. Keep this behavior aligned with upstream changes to `scripts/code.bat`.
-
 ## Apply product identity
 
 ```bash

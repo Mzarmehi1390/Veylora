@@ -1,10 +1,8 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import {
-  resolveCodeOssLauncher,
-  resolveCodeOssWindowsExecutable
-} from './launcher-paths.mjs';
+import { createWindowsLaunchPlan } from './windows-launch-plan.mjs';
+import { resolveCodeOssLauncher } from './launcher-paths.mjs';
 import { runCommand } from './process.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -20,45 +18,34 @@ function launchWindows() {
   }
 
   const product = JSON.parse(readFileSync(productPath, 'utf8'));
-  const executable = resolveCodeOssWindowsExecutable(upstream, product.nameShort);
+  const plan = createWindowsLaunchPlan({
+    upstream,
+    extension,
+    productName: product.nameShort,
+    args: userArgs,
+    env: process.env,
+    nodeExecutable: process.execPath
+  });
 
-  // Mirror scripts/code.bat's pre-launch preparation without invoking cmd.exe.
-  if (!process.env.VSCODE_SKIP_PRELAUNCH) {
-    runCommand(process.execPath, ['build/lib/preLaunch.ts'], { cwd: upstream });
+  // Mirror scripts/code.bat while keeping user-controlled arguments out of cmd.exe.
+  if (plan.prelaunch) {
+    runCommand(plan.prelaunch.command, plan.prelaunch.args, {
+      cwd: plan.prelaunch.cwd,
+      shell: false
+    });
   }
 
-  if (!existsSync(executable)) {
+  if (!existsSync(plan.launch.command)) {
     throw new Error(
-      `The built Code - OSS executable was not found at ${executable}. ` +
+      `The built Code - OSS executable was not found at ${plan.launch.command}. ` +
       'Allow the upstream pre-launch step to complete and verify the native build prerequisites.'
     );
   }
 
-  const environment = {
-    ...process.env,
-    NODE_ENV: 'development',
-    VSCODE_DEV: '1',
-    VSCODE_CLI: '1',
-    ELECTRON_ENABLE_LOGGING: '1',
-    ELECTRON_ENABLE_STACK_DUMPING: '1'
-  };
-
-  if (userArgs[0] === '--builtin') {
-    runCommand(executable, ['build/builtin'], { cwd: upstream, env: environment });
-    return;
-  }
-
-  const args = ['.'];
-  if (!userArgs.includes('--extensionTestsPath')) {
-    args.push('--disable-extension=vscode.vscode-api-tests');
-  }
-  args.push(...userArgs, `--extensionDevelopmentPath=${extension}`);
-
-  // A native .exe preserves argument boundaries and avoids cmd.exe expansion.
-  runCommand(executable, args, {
-    cwd: upstream,
-    env: environment,
-    shell: false
+  runCommand(plan.launch.command, plan.launch.args, {
+    cwd: plan.launch.cwd,
+    env: plan.launch.env,
+    shell: plan.launch.shell
   });
 }
 

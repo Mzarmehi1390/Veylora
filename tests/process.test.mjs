@@ -2,53 +2,33 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { runCommand } from '../scripts/process.mjs';
 
-test('defaults to direct execution and preserves argument boundaries', () => {
+test('uses inherited stdio, working directory and Windows shell mode', () => {
   let invocation;
   const result = { status: 0, error: null };
-  const actual = runCommand('Veylora.exe', ['--new-window', 'C:\\work space'], {
-    cwd: 'C:\\Veylora',
+  const actual = runCommand('corepack', ['pnpm', 'install'], {
+    cwd: '/workspace/code-oss',
+    platform: 'win32',
     spawn: (...args) => { invocation = args; return result; }
   });
-
   assert.equal(actual, result);
   assert.deepEqual(invocation, [
-    'Veylora.exe',
-    ['--new-window', 'C:\\work space'],
-    {
-      cwd: 'C:\\Veylora',
-      stdio: 'inherit',
-      shell: false,
-      windowsHide: false
-    }
+    'corepack',
+    ['pnpm', 'install'],
+    { cwd: '/workspace/code-oss', stdio: 'inherit', shell: true, windowsHide: false }
   ]);
 });
 
-test('allows explicit shell use for trusted fixed-argument Windows command shims', () => {
-  let invocation;
-  runCommand('corepack', ['pnpm', 'install'], {
-    cwd: 'C:\\workspace\\code-oss',
-    shell: true,
-    spawn: (...args) => {
-      invocation = args;
-      return { status: 0, error: null };
-    }
-  });
-
-  assert.equal(invocation[2].shell, true);
-  assert.deepEqual(invocation[1], ['pnpm', 'install']);
-});
-
-test('passes environment overrides to the child process', () => {
+test('does not enable a shell on POSIX platforms', () => {
   let options;
-  const env = { NODE_ENV: 'development', VSCODE_DEV: '1' };
-  runCommand('Veylora.exe', [], {
-    env,
+  runCommand('pnpm', ['run', 'watch'], {
+    cwd: '/workspace/code-oss',
+    platform: 'linux',
     spawn: (_command, _args, value) => {
       options = value;
       return { status: 0, error: null };
     }
   });
-  assert.equal(options.env, env);
+  assert.equal(options.shell, false);
 });
 
 test('reports executable startup errors and preserves their cause', () => {

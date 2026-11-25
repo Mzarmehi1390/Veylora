@@ -19,6 +19,8 @@ There is one canonical development launch path: scripts/launch.mjs. It validates
 
 On Linux and macOS, the launcher executes the upstream scripts/code.sh directly. On Windows, it mirrors the relevant code.bat pre-launch and environment setup, then starts the generated Electron executable directly. It does not pass user-supplied CLI arguments through cmd.exe or the batch launcher, avoiding shell expansion while preserving argument boundaries.
 
+Windows command construction is isolated in scripts/windows-launch-plan.mjs. This pure module defines pre-launch behavior, built-in mode, extension-test handling, the development environment and direct-execution policy. Its tests run on every CI operating system, so argument and environment regressions can be caught without requiring a Windows desktop session.
+
 Both npm run dev:launch and python main.py use this path. Keeping a single launcher prevents the Python compatibility command from silently opening a different, limited application.
 
 ## Extension boundaries
