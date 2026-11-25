@@ -112,3 +112,18 @@ test('rejects unsafe product executable names', () => {
     /safe Windows filename/
   );
 });
+
+test('preserves API test extension when extension test path uses equals syntax', () => {
+  const plan = createWindowsLaunchPlan({
+    upstream,
+    extension,
+    productName: 'Veylora',
+    args: ['--extensionTestsPath=C:\\\\tests\\\\suite.js'],
+    env: {}
+  });
+
+  assert.equal(
+    plan.launch.args.includes('--disable-extension=vscode.vscode-api-tests'),
+    false
+  );
+});
