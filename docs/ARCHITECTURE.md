@@ -15,7 +15,11 @@ The upstream source is pinned in vendor/code-oss as a Git submodule. The pin is 
 
 ## Launch contract
 
-There is one canonical development launch path: scripts/launch.mjs. It validates the initialized upstream checkout, selects the platform-native Code - OSS launcher (code.bat on Windows, code.sh on Linux/macOS), compiles Veylora Core and starts the workbench with the extension development path configured.
+There is one canonical development launch path: scripts/launch.mjs. It validates the initialized upstream checkout, compiles Veylora Core and starts the workbench with the extension development path configured.
+
+On Linux and macOS, the launcher executes the upstream scripts/code.sh directly. On Windows, it mirrors the relevant code.bat pre-launch and environment setup, then starts the generated Electron executable directly. It does not pass user-supplied CLI arguments through cmd.exe or the batch launcher, avoiding shell expansion while preserving argument boundaries.
+
+Windows command construction is isolated in scripts/windows-launch-plan.mjs. This pure module defines pre-launch behavior, built-in mode, extension-test handling, the development environment and direct-execution policy. Its tests run on every CI operating system, so argument and environment regressions can be caught without requiring a Windows desktop session.
 
 Both npm run dev:launch and python main.py use this path. Keeping a single launcher prevents the Python compatibility command from silently opening a different, limited application.
 
@@ -30,8 +34,8 @@ Future first-party capabilities should be added as focused modules or extensions
 1. Review upstream release notes and breaking changes.
 2. Update the submodule to a selected, tested commit.
 3. Rebuild the first-party extension against the supported API.
-4. Run root tests and strict TypeScript checks.
+4. Run root tests and strict TypeScript checks on Windows, Linux and macOS.
 5. Verify product branding and Open VSX configuration against the updated upstream product.json.
 6. Run the full upstream build and smoke tests before publishing a release.
 
-The normal Veylora CI validates our integration layer without rebuilding all of Code - OSS on every small extension change. Release CI must additionally build the pinned upstream source on supported operating systems. A passing integration CI is not, by itself, proof that the full desktop workbench builds or runs correctly.
+The normal Veylora CI validates our integration layer without rebuilding all of Code - OSS on every small extension change. Release CI must additionally build the pinned upstream source and smoke-test the desktop workbench before publishing. A passing integration CI is not, by itself, proof that the full desktop workbench builds or runs correctly.

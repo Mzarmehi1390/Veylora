@@ -1,7 +1,9 @@
-import { readFile, writeFile, rename } from 'node:fs/promises';
-import { resolve } from 'node:path';
+import { readFile, writeFile, rename, unlink } from 'node:fs/promises';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const productPath = resolve('vendor/code-oss/product.json');
+const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const productPath = resolve(root, 'vendor', 'code-oss', 'product.json');
 const branding = {
   nameShort: 'Veylora', nameLong: 'Veylora IDE', applicationName: 'veylora',
   dataFolderName: '.veylora', sharedDataFolderName: '.veylora-shared',
@@ -33,10 +35,25 @@ const branding = {
   linkProtectionTrustedDomains: ['https://open-vsx.org']
 };
 
-const product = JSON.parse(await readFile(productPath, 'utf8'));
-Object.assign(product, branding);
-delete product.defaultChatAgent;
-const temporaryPath = productPath + '.veylora-tmp';
-await writeFile(temporaryPath, JSON.stringify(product, null, 2) + '\n', 'utf8');
-await rename(temporaryPath, productPath);
-console.log('Applied Veylora product identity and Open VSX configuration.');
+async function main() {
+  const product = JSON.parse(await readFile(productPath, 'utf8'));
+  Object.assign(product, branding);
+  delete product.defaultChatAgent;
+
+  const temporaryPath = productPath + '.veylora-tmp';
+  try {
+    await writeFile(temporaryPath, JSON.stringify(product, null, 2) + '\n', 'utf8');
+    await rename(temporaryPath, productPath);
+  } catch (error) {
+    await unlink(temporaryPath).catch(() => {});
+    throw error;
+  }
+  console.log('Applied Veylora product identity and Open VSX configuration.');
+}
+
+try {
+  await main();
+} catch (error) {
+  console.error(`Veylora branding failed: ${error.message}`);
+  process.exitCode = 1;
+}
