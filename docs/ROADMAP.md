@@ -38,7 +38,7 @@ We do not reimplement the editor engine. Differentiation comes from product defa
 
 ## Phase 2 — Differentiation
 
-- [ ] Project templates / quick-start scaffolds (Python, Node, web)
+- [x] Project templates / quick-start scaffolds (Python, Node, static web; never overwrite existing files)
 - [ ] Built-in task recipes and run configuration helpers
 - [ ] Optional local AI assistant integration points (provider-agnostic, user-controlled)
 - [ ] Performance-oriented default settings profile

@@ -28,7 +28,7 @@ This document is the single entry point for another AI or developer taking over.
 | Ref | Meaning |
 | --- | --- |
 | `main` | Last merged foundation (Code-OSS adoption, Core ~0.2, basic CI) |
-| `develop/modern-foundation` | **Preferred work branch** — Core 0.3, ROADMAP, Build workflow, richer theme/docs |
+| `develop/modern-foundation` | **Preferred work branch** — Core 0.4, project scaffolds, ROADMAP, Build workflow, richer theme/docs |
 
 If `develop/modern-foundation` is not yet merged, continue from that branch (or merge it to `main` first).
 
@@ -98,7 +98,8 @@ Details: [ARCHITECTURE.md](./ARCHITECTURE.md), [UPSTREAM.md](./UPSTREAM.md), [LI
 ```text
 package.json                          Root scripts (bootstrap, brand, test, typecheck)
 extensions/veylora-core/package.json  Extension manifest (commands, views, theme)
-extensions/veylora-core/src/extension.ts   All first-party UX logic today
+extensions/veylora-core/src/extension.ts   Activation, dashboard, commands
+extensions/veylora-core/src/scaffolds.ts   Python / Node / web starters (no overwrite)
 extensions/veylora-core/themes/       Veylora Dark
 scripts/apply-branding.mjs            product.json overlay + Open VSX
 scripts/bootstrap.mjs                 submodule + pnpm + extension npm install
@@ -117,6 +118,7 @@ tests/*.test.mjs                      Integration contracts (keep green)
 - [x] Branding + Open VSX
 - [x] Veylora Core: dashboard webview, workspace init (`.veylora/workspace.json`), diagnostics
 - [x] Core 0.3 (on `develop/modern-foundation`): health check, welcome command, keybinding, init hint, schema v2 modern defaults, richer theme
+- [x] Core 0.4: project scaffolds for Python, Node, and static web (skip existing files, stamp `.veylora/workspace.json`)
 - [x] Integration CI
 - [x] Build workflow that packages VSIX
 - [x] Docs: architecture, upstream, licensing, roadmap, this handoff
@@ -126,12 +128,11 @@ tests/*.test.mjs                      Integration contracts (keep green)
 ## 7. Suggested next work (priority order)
 
 1. **Merge** `develop/modern-foundation` → `main` if still open; confirm CI + Build green.
-2. **Project scaffolds** — commands to drop starter templates (Python / Node) into the workspace.
-3. **Settings profile** — ship recommended modern defaults (optional `veylora` profile or docs + command).
-4. **Release workflow** — on tag: attach VSIX (+ later installers) to GitHub Release.
-5. **Full Linux workbench compile** — harden `compile-workbench-linux` job against real gulp/pnpm scripts of the pinned SHA.
-6. **Optional AI hooks** — provider-agnostic, user-configured; no vendor lock-in in core product.json.
-7. **Open VSX publish** for `veylora-core` when ready.
+2. **Settings profile** — ship recommended modern defaults (optional `veylora` profile or docs + command).
+3. **Release workflow** — on tag: attach VSIX (+ later installers) to GitHub Release.
+4. **Full Linux workbench compile** — harden `compile-workbench-linux` job against real gulp/pnpm scripts of the pinned SHA.
+5. **Optional AI hooks** — provider-agnostic, user-configured; no vendor lock-in in core product.json.
+6. **Open VSX publish** for `veylora-core` when ready.
 
 Non-goals: rewriting the editor from scratch; shipping MS branding/Marketplace.
 

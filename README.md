@@ -39,6 +39,7 @@ The upstream workbench provides the mature foundation for editing, tabs, command
 - Vendor-neutral Open VSX extension gallery configuration
 - First-party Veylora activity-bar workspace view and dashboard
 - Workspace initialization via `.veylora/workspace.json` (schema v2, modern defaults)
+- Project templates for Python, Node, and static web (existing files are never overwritten)
 - Workspace health check and richer runtime diagnostics
 - Keybindings (`Ctrl/Cmd+Shift+V` dashboard)
 - Veylora Dark theme and Python snippets

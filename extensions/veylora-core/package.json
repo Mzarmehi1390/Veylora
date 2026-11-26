@@ -2,7 +2,7 @@
   "name": "veylora-core",
   "displayName": "Veylora Core",
   "description": "First-party workspace, onboarding, diagnostics and modern defaults for Veylora IDE.",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "publisher": "veylora",
   "license": "MIT",
   "engines": {
@@ -53,6 +53,11 @@
       {
         "command": "veylora.workspaceHealth",
         "title": "Veylora: Workspace Health Check",
+        "category": "Veylora"
+      },
+      {
+        "command": "veylora.newProject",
+        "title": "Veylora: New Project from Template",
         "category": "Veylora"
       }
     ],

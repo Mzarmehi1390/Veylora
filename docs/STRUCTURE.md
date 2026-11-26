@@ -17,6 +17,7 @@ Veylora/
 ├── extensions/
 │   └── veylora-core/       # First-party VS Code-compatible extension
 │       ├── src/extension.ts
+│       ├── src/scaffolds.ts  # Python, Node, and static web starters
 │       ├── themes/
 │       ├── snippets/
 │       ├── resources/
@@ -34,7 +35,7 @@ Veylora/
 ├── veylora/                # LEGACY PyQt package — not the shipped runtime
 ├── legacy/                 # LEGACY prototype scripts
 ├── main.py                 # Compat entry → Code-OSS launcher
-├── package.json            # Root orchestration (v0.3.0 on develop branch)
+├── package.json            # Root orchestration (v0.4.0 on develop branch)
 ├── pyproject.toml
 ├── requirements.txt
 ├── README.md

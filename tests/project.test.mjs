@@ -10,14 +10,15 @@ const manifest = JSON.parse(
 );
 const rootManifest = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'));
 
-test('Veylora Core declares dashboard, health and welcome commands', () => {
+test('Veylora Core declares dashboard, health, welcome and scaffold commands', () => {
   const commands = manifest.contributes.commands.map((item) => item.command);
   assert.ok(commands.includes('veylora.openDashboard'));
   assert.ok(commands.includes('veylora.createWorkspaceConfig'));
   assert.ok(commands.includes('veylora.workspaceHealth'));
   assert.ok(commands.includes('veylora.welcome'));
+  assert.ok(commands.includes('veylora.newProject'));
   assert.equal(manifest.main, './dist/extension.js');
-  assert.equal(manifest.version, '0.3.0');
+  assert.equal(manifest.version, '0.4.0');
 });
 
 test('Veylora contributes activity bar view, theme and keybindings', () => {
@@ -45,7 +46,7 @@ test('cross-platform development commands point to Node orchestration scripts', 
   assert.equal(rootManifest.scripts.bootstrap, 'node scripts/bootstrap.mjs');
   assert.equal(rootManifest.scripts['dev:watch'], 'node scripts/watch.mjs');
   assert.equal(rootManifest.scripts['dev:launch'], 'node scripts/launch.mjs');
-  assert.equal(rootManifest.version, '0.3.0');
+  assert.equal(rootManifest.version, '0.4.0');
 });
 
 test('all Veylora Node orchestration scripts parse successfully', () => {
