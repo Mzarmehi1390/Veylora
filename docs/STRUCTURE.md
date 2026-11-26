@@ -5,7 +5,8 @@ Veylora/
 ├── .github/
 │   └── workflows/
 │       ├── ci.yml          # Fast integration: tests, typecheck, Python compile
-│       └── build.yml       # VSIX package artifact; optional full Code-OSS compile
+│       ├── build.yml       # VSIX package artifact; optional full Code-OSS compile
+│       └── release.yml     # Tag v* → GitHub Release with VSIX + SHA256SUMS
 ├── docs/
 │   ├── HANDOFF.md          # Start here for takeover
 │   ├── AGENTS.md           # Rules for AI agents
@@ -18,7 +19,8 @@ Veylora/
 │   └── veylora-core/       # First-party VS Code-compatible extension
 │       ├── src/extension.ts
 │       ├── src/scaffolds.ts  # Python, Node, and static web starters
-│       ├── themes/
+│       ├── src/profile.ts    # Folder-scoped modern settings profile
+│       ├── themes/           # Veylora Dark + Veylora Light
 │       ├── snippets/
 │       ├── resources/
 │       ├── package.json

@@ -14,7 +14,7 @@ This document is the single entry point for another AI or developer taking over.
 | --- | --- | --- |
 | **Runtime** | Real desktop IDE | `vendor/code-oss` (Git submodule → `microsoft/vscode`) |
 | **Product identity** | Name, Open VSX, no MS Marketplace | `scripts/apply-branding.mjs` → patches `product.json` |
-| **First-party features** | Dashboard, workspace, theme, diagnostics | `extensions/veylora-core/` |
+| **First-party features** | Dashboard, workspace, theme, diagnostics, scaffolds, profile | `extensions/veylora-core/` |
 | **Dev orchestration** | Bootstrap / watch / launch | `scripts/*.mjs` |
 | **Legacy prototype** | Old PyQt6 editor — **reference only** | `veylora/`, `legacy/` |
 | **Compat entry** | `python main.py` → same Code-OSS launcher | `main.py` |
@@ -28,7 +28,7 @@ This document is the single entry point for another AI or developer taking over.
 | Ref | Meaning |
 | --- | --- |
 | `main` | Last merged foundation (Code-OSS adoption, Core ~0.2, basic CI) |
-| `develop/modern-foundation` | **Preferred work branch** — Core 0.4, project scaffolds, ROADMAP, Build workflow, richer theme/docs |
+| `develop/modern-foundation` | **Preferred work branch** — Core 0.4, scaffolds, modern profile, light theme, walkthrough, release workflow |
 
 If `develop/modern-foundation` is not yet merged, continue from that branch (or merge it to `main` first).
 
@@ -97,15 +97,17 @@ Details: [ARCHITECTURE.md](./ARCHITECTURE.md), [UPSTREAM.md](./UPSTREAM.md), [LI
 
 ```text
 package.json                          Root scripts (bootstrap, brand, test, typecheck)
-extensions/veylora-core/package.json  Extension manifest (commands, views, theme)
-extensions/veylora-core/src/extension.ts   Activation, dashboard, commands
+extensions/veylora-core/package.json  Extension manifest (commands, views, themes, walkthrough)
+extensions/veylora-core/src/extension.ts   Activation, dashboard, workspace init, health
 extensions/veylora-core/src/scaffolds.ts   Python / Node / web starters (no overwrite)
-extensions/veylora-core/themes/       Veylora Dark
+extensions/veylora-core/src/profile.ts     Folder-scoped modern settings profile
+extensions/veylora-core/themes/       Veylora Dark and Veylora Light
 scripts/apply-branding.mjs            product.json overlay + Open VSX
 scripts/bootstrap.mjs                 submodule + pnpm + extension npm install
 scripts/launch.mjs                    compile extension + start Code-OSS launcher
 .github/workflows/ci.yml              Fast tests + typecheck + Python compile
 .github/workflows/build.yml           VSIX artifact; optional full compile
+.github/workflows/release.yml         Tag v* → GitHub Release with VSIX + checksum
 docs/ROADMAP.md                       Phased product plan
 tests/*.test.mjs                      Integration contracts (keep green)
 ```
@@ -117,10 +119,13 @@ tests/*.test.mjs                      Integration contracts (keep green)
 - [x] Code - OSS submodule + launch unification
 - [x] Branding + Open VSX
 - [x] Veylora Core: dashboard webview, workspace init (`.veylora/workspace.json`), diagnostics
-- [x] Core 0.3 (on `develop/modern-foundation`): health check, welcome command, keybinding, init hint, schema v2 modern defaults, richer theme
+- [x] Core 0.3: health check, welcome command, keybinding, init hint, schema v2 modern defaults, richer theme
 - [x] Core 0.4: project scaffolds for Python, Node, and static web (skip existing files, stamp `.veylora/workspace.json`)
+- [x] Modern settings profile (telemetry off, quieter watcher/search, folder-scoped)
+- [x] Veylora Light theme + getting-started walkthrough
 - [x] Integration CI
 - [x] Build workflow that packages VSIX
+- [x] Release workflow: tag `v*` publishes the VSIX plus `SHA256SUMS` on a GitHub Release
 - [x] Docs: architecture, upstream, licensing, roadmap, this handoff
 
 ---
@@ -128,11 +133,11 @@ tests/*.test.mjs                      Integration contracts (keep green)
 ## 7. Suggested next work (priority order)
 
 1. **Merge** `develop/modern-foundation` → `main` if still open; confirm CI + Build green.
-2. **Settings profile** — ship recommended modern defaults (optional `veylora` profile or docs + command).
-3. **Release workflow** — on tag: attach VSIX (+ later installers) to GitHub Release.
-4. **Full Linux workbench compile** — harden `compile-workbench-linux` job against real gulp/pnpm scripts of the pinned SHA.
-5. **Optional AI hooks** — provider-agnostic, user-configured; no vendor lock-in in core product.json.
-6. **Open VSX publish** for `veylora-core` when ready.
+2. **Full Linux workbench compile** — harden `compile-workbench-linux` job against the pinned gulp/pnpm scripts.
+3. **Optional AI hooks** — provider-agnostic, user-configured; no vendor lock-in in core product.json.
+4. **Multi-root workspace helpers** and improved product icons for installers.
+5. **Open VSX publish** for `veylora-core` when ready.
+6. **Installers** — signed or portable archives after the workbench compile is reliable.
 
 Non-goals: rewriting the editor from scratch; shipping MS branding/Marketplace.
 

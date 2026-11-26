@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { applyModernProfile } from './profile';
 import {
   applyScaffoldMarker,
   buildWorkspaceConfig,
@@ -17,7 +18,10 @@ type DashboardCommand =
   | 'openSettings'
   | 'workspaceHealth'
   | 'welcome'
-  | 'newProject';
+  | 'newProject'
+  | 'applyModernProfile';
+
+const WALKTHROUGH_ID = 'veylora.veylora-core#veylora.gettingStarted';
 
 export function activate(context: vscode.ExtensionContext): void {
   const output = vscode.window.createOutputChannel('Veylora');
@@ -29,9 +33,10 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand('veylora.openSettings', () =>
       vscode.commands.executeCommand('workbench.action.openSettings', 'veylora')
     ),
-    vscode.commands.registerCommand('veylora.welcome', () => openDashboardPanel(context, output)),
+    vscode.commands.registerCommand('veylora.welcome', () => openWelcome(context, output)),
     vscode.commands.registerCommand('veylora.workspaceHealth', () => runWorkspaceHealth(output)),
-    vscode.commands.registerCommand('veylora.newProject', () => createProjectFromTemplate(output))
+    vscode.commands.registerCommand('veylora.newProject', () => createProjectFromTemplate(output)),
+    vscode.commands.registerCommand('veylora.applyModernProfile', () => applyModernProfile(output))
   ];
 
   const view = vscode.window.registerWebviewViewProvider(
@@ -102,6 +107,9 @@ async function handleDashboardMessage(message: unknown, output: vscode.OutputCha
     case 'newProject':
       await createProjectFromTemplate(output);
       break;
+    case 'applyModernProfile':
+      await applyModernProfile(output);
+      break;
     case 'welcome':
       break;
   }
@@ -116,8 +124,19 @@ function isDashboardMessage(value: unknown): value is { command: DashboardComman
     command === 'openSettings' ||
     command === 'workspaceHealth' ||
     command === 'welcome' ||
-    command === 'newProject'
+    command === 'newProject' ||
+    command === 'applyModernProfile'
   );
+}
+
+async function openWelcome(context: vscode.ExtensionContext, output: vscode.OutputChannel): Promise<void> {
+  try {
+    await vscode.commands.executeCommand('workbench.action.openWalkthrough', WALKTHROUGH_ID, false);
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    output.appendLine('Walkthrough unavailable, opening dashboard: ' + detail);
+    openDashboardPanel(context, output);
+  }
 }
 
 async function maybeHintWorkspaceInit(
@@ -376,7 +395,7 @@ async function runWorkspaceHealth(output: vscode.OutputChannel): Promise<void> {
     await vscode.workspace.fs.stat(gitUri);
     checks.push('[ok] Git repository detected');
   } catch {
-    checks.push('[·] No .git directory (optional)');
+    checks.push('[\u00b7] No .git directory (optional)');
   }
 
   const packageJson = vscode.Uri.joinPath(folder.uri, 'package.json');
@@ -516,6 +535,7 @@ function renderDashboard(webview: vscode.Webview, extensionUri: vscode.Uri): str
       <p class="meta">API ${api}</p>
       <button data-command="createWorkspaceConfig">Initialize Veylora Workspace</button>
       <button class="secondary" data-command="newProject">New Project from Template</button>
+      <button class="secondary" data-command="applyModernProfile">Apply Modern Settings Profile</button>
       <button class="secondary" data-command="workspaceHealth">Run Health Check</button>
     </section>
 
