@@ -19,7 +19,7 @@ git submodule update --init --recursive
 
 ## Development
 
-Requirements: Git, Node.js 22 or newer, Corepack, and the native build tools required by Code - OSS on your operating system.
+Requirements: Git, Node.js 22.6 or newer, Corepack, and the native build tools required by Code - OSS on your operating system.
 
 ```bash
 npm run bootstrap
