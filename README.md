@@ -39,11 +39,16 @@ The upstream workbench provides the mature foundation for editing, tabs, command
 - Vendor-neutral Open VSX extension gallery configuration
 - First-party Veylora activity-bar workspace view and dashboard
 - Workspace initialization via `.veylora/workspace.json` (schema v2, modern defaults)
+- Project scaffolds for Python, Node and static web (existing files are never overwritten)
+- Run tasks written beside those scaffolds (`Run Python`, `Run Node`, `Serve Web`)
+- Modern settings profile for the open folder (telemetry off, quieter watcher/search excludes)
 - Workspace health check and richer runtime diagnostics
+- Getting-started walkthrough (`Veylora: Welcome`)
 - Keybindings (`Ctrl/Cmd+Shift+V` dashboard)
-- Veylora Dark theme and Python snippets
+- Veylora Dark and Veylora Light themes, plus Python snippets
 - Pinned upstream source for reproducible builds
 - Automated tests, TypeScript strict checks, VSIX packaging via GitHub Actions
+- Tag `v*` publishes the VSIX and a SHA256 checksum as a GitHub Release
 
 ## Source and licensing
 
@@ -74,6 +79,8 @@ npm run package:extension
 ```
 
 GitHub **Build** workflow uploads the VSIX as an artifact on pushes to `main` and `develop/**`.
+
+Pushing a tag such as `v0.4.0` runs **Release**, which attaches that VSIX and `SHA256SUMS` to a GitHub Release. Desktop installers are not part of this workflow yet.
 
 ## Repository layout
 

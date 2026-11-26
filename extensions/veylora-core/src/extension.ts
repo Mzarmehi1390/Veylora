@@ -1,14 +1,23 @@
 import * as vscode from 'vscode';
+import { applyModernProfile } from './profile';
+import { SCAFFOLDS } from './product-layer';
+import { applyScaffold } from './scaffolds';
 
 type DashboardCommand =
   | 'createWorkspaceConfig'
   | 'showDiagnostics'
   | 'openSettings'
   | 'workspaceHealth'
-  | 'welcome';
+  | 'welcome'
+  | 'newProject'
+  | 'applyModernProfile';
+
+const WALKTHROUGH_ID = 'veylora.veylora-core#veylora.gettingStarted';
 
 export function activate(context: vscode.ExtensionContext): void {
   const output = vscode.window.createOutputChannel('Veylora');
+  const version =
+    vscode.extensions.getExtension('veylora.veylora-core')?.packageJSON.version ?? '0.4.0';
 
   const commands = [
     vscode.commands.registerCommand('veylora.openDashboard', () => openDashboardPanel(context, output)),
@@ -17,8 +26,10 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand('veylora.openSettings', () =>
       vscode.commands.executeCommand('workbench.action.openSettings', 'veylora')
     ),
-    vscode.commands.registerCommand('veylora.welcome', () => openDashboardPanel(context, output)),
-    vscode.commands.registerCommand('veylora.workspaceHealth', () => runWorkspaceHealth(output))
+    vscode.commands.registerCommand('veylora.welcome', () => openWelcome(context, output)),
+    vscode.commands.registerCommand('veylora.workspaceHealth', () => runWorkspaceHealth(output)),
+    vscode.commands.registerCommand('veylora.newProject', () => createProject(output)),
+    vscode.commands.registerCommand('veylora.applyModernProfile', () => applyModernProfile(output))
   ];
 
   const view = vscode.window.registerWebviewViewProvider(
@@ -36,7 +47,7 @@ export function activate(context: vscode.ExtensionContext): void {
   }
 
   context.subscriptions.push(output, ...commands, view, statusBar);
-  output.appendLine('Veylora Core 0.3 activated.');
+  output.appendLine('Veylora Core ' + version + ' activated.');
 
   void maybeHintWorkspaceInit(context, output);
 }
@@ -88,6 +99,12 @@ async function handleDashboardMessage(message: unknown, output: vscode.OutputCha
       break;
     case 'welcome':
       break;
+    case 'newProject':
+      await createProject(output);
+      break;
+    case 'applyModernProfile':
+      await applyModernProfile(output);
+      break;
   }
 }
 
@@ -99,8 +116,58 @@ function isDashboardMessage(value: unknown): value is { command: DashboardComman
     command === 'showDiagnostics' ||
     command === 'openSettings' ||
     command === 'workspaceHealth' ||
-    command === 'welcome'
+    command === 'welcome' ||
+    command === 'newProject' ||
+    command === 'applyModernProfile'
   );
+}
+
+async function openWelcome(context: vscode.ExtensionContext, output: vscode.OutputChannel): Promise<void> {
+  try {
+    await vscode.commands.executeCommand('workbench.action.openWalkthrough', WALKTHROUGH_ID, false);
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    output.appendLine('Walkthrough unavailable, opening dashboard: ' + detail);
+    openDashboardPanel(context, output);
+  }
+}
+
+async function createProject(output: vscode.OutputChannel): Promise<void> {
+  const folder = vscode.workspace.workspaceFolders?.[0];
+  if (!folder) {
+    void vscode.window.showWarningMessage('Open a project folder before creating a Veylora project.');
+    return;
+  }
+
+  const picked = await vscode.window.showQuickPick(
+    SCAFFOLDS.map((scaffold) => ({
+      label: scaffold.label,
+      description: scaffold.description,
+      detail: scaffold.detail,
+      scaffold
+    })),
+    {
+      title: 'Veylora: New Project',
+      placeHolder: 'Python, Node, or a static web page',
+      ignoreFocusOut: true
+    }
+  );
+  if (!picked) return;
+
+  const confirmed = await vscode.window.showInformationMessage(
+    'Create a ' + picked.scaffold.label + ' project in “' + folder.name + '”? Existing files stay as they are.',
+    'Create',
+    'Cancel'
+  );
+  if (confirmed !== 'Create') return;
+
+  try {
+    await applyScaffold(folder.uri, picked.scaffold, output);
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    output.appendLine('Scaffold failed: ' + detail);
+    void vscode.window.showErrorMessage('Could not create the Veylora project: ' + detail);
+  }
 }
 
 async function maybeHintWorkspaceInit(
@@ -369,6 +436,12 @@ function renderDashboard(webview: vscode.Webview, extensionUri: vscode.Uri): str
       <p class="meta">API ${api}</p>
       <button data-command="createWorkspaceConfig">Initialize Veylora Workspace</button>
       <button class="secondary" data-command="workspaceHealth">Run Health Check</button>
+    </section>
+
+    <section class="card">
+      <h2>Start</h2>
+      <button data-command="newProject">New Project from Template</button>
+      <button class="secondary" data-command="applyModernProfile">Apply Modern Settings Profile</button>
     </section>
 
     <section class="card">
