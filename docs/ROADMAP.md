@@ -33,15 +33,15 @@ We do not reimplement the editor engine. Differentiation comes from product defa
 - [x] Workspace health check
 - [x] CI job that packages the extension as a downloadable artifact
 - [ ] Merge develop branch to `main` and verify Actions on default branch
-- [ ] Optional light theme
-- [ ] First-run walkthrough polish
+- [x] Optional light theme
+- [x] First-run walkthrough polish
 
 ## Phase 2 — Differentiation
 
 - [x] Project templates / quick-start scaffolds (Python, Node, static web; never overwrite existing files)
-- [ ] Built-in task recipes and run configuration helpers
+- [x] Built-in task recipes and run configuration helpers (per scaffold; existing tasks are kept)
 - [ ] Optional local AI assistant integration points (provider-agnostic, user-controlled)
-- [ ] Performance-oriented default settings profile
+- [x] Performance-oriented default settings profile
 - [ ] Multi-root workspace helpers
 - [ ] Improved icons and product resources for installers
 
@@ -51,7 +51,7 @@ We do not reimplement the editor engine. Differentiation comes from product defa
 - [ ] Windows and macOS release builds where feasible
 - [ ] Signed installers / portable archives where practical
 - [ ] Automated smoke test of launched workbench
-- [ ] Versioned GitHub Releases with notes and checksums
+- [x] Versioned GitHub Releases with notes and checksums (VSIX on `v*` tags; installers still later)
 
 ## Phase 4 — Ecosystem
 

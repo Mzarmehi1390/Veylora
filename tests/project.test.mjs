@@ -10,24 +10,27 @@ const manifest = JSON.parse(
 );
 const rootManifest = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'));
 
-test('Veylora Core declares dashboard, health, welcome and scaffold commands', () => {
+test('Veylora Core declares dashboard, health, welcome, scaffold and profile commands', () => {
   const commands = manifest.contributes.commands.map((item) => item.command);
   assert.ok(commands.includes('veylora.openDashboard'));
   assert.ok(commands.includes('veylora.createWorkspaceConfig'));
   assert.ok(commands.includes('veylora.workspaceHealth'));
   assert.ok(commands.includes('veylora.welcome'));
   assert.ok(commands.includes('veylora.newProject'));
+  assert.ok(commands.includes('veylora.applyModernProfile'));
   assert.equal(manifest.main, './dist/extension.js');
   assert.equal(manifest.version, '0.4.0');
 });
 
-test('Veylora contributes activity bar view, theme and keybindings', () => {
+test('Veylora contributes activity bar view, themes, keybindings and walkthrough', () => {
   assert.ok(manifest.contributes.viewsContainers.activitybar.some((item) => item.id === 'veylora'));
   assert.ok(manifest.contributes.views.veylora.some((item) => item.id === 'veylora.workspace'));
   assert.ok(manifest.contributes.themes.some((item) => item.label === 'Veylora Dark'));
+  assert.ok(manifest.contributes.themes.some((item) => item.label === 'Veylora Light'));
   assert.ok(
     manifest.contributes.keybindings.some((item) => item.command === 'veylora.openDashboard')
   );
+  assert.ok(manifest.contributes.walkthroughs.some((item) => item.id === 'veylora.gettingStarted'));
 });
 
 test('modern defaults configuration is declared', () => {

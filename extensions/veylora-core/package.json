@@ -59,6 +59,11 @@
         "command": "veylora.newProject",
         "title": "Veylora: New Project from Template",
         "category": "Veylora"
+      },
+      {
+        "command": "veylora.applyModernProfile",
+        "title": "Veylora: Apply Modern Settings Profile",
+        "category": "Veylora"
       }
     ],
     "keybindings": [
@@ -122,6 +127,65 @@
         "label": "Veylora Dark",
         "uiTheme": "vs-dark",
         "path": "./themes/veylora-dark-color-theme.json"
+      },
+      {
+        "label": "Veylora Light",
+        "uiTheme": "vs",
+        "path": "./themes/veylora-light-color-theme.json"
+      }
+    ],
+    "walkthroughs": [
+      {
+        "id": "veylora.gettingStarted",
+        "title": "Get started with Veylora",
+        "description": "Open a folder, scaffold a project, and apply privacy-first defaults.",
+        "steps": [
+          {
+            "id": "folder",
+            "title": "Open a folder",
+            "description": "Veylora works inside a project folder.\n[Open Folder](command:workbench.action.files.openFolder)",
+            "media": {
+              "svg": "resources/veylora.svg",
+              "altText": "Veylora mark"
+            }
+          },
+          {
+            "id": "scaffold",
+            "title": "Scaffold a project",
+            "description": "Add a Python, Node, or web starter. Files you already have are left untouched.\n[New Project](command:veylora.newProject)",
+            "media": {
+              "svg": "resources/veylora.svg",
+              "altText": "Veylora mark"
+            }
+          },
+          {
+            "id": "profile",
+            "title": "Apply modern defaults",
+            "description": "Write a quieter, faster settings profile for this folder only. Telemetry is set to off.\n[Apply Profile](command:veylora.applyModernProfile)",
+            "media": {
+              "svg": "resources/veylora.svg",
+              "altText": "Veylora mark"
+            }
+          },
+          {
+            "id": "init",
+            "title": "Initialize the workspace",
+            "description": "Save `.veylora/workspace.json` so health checks recognize this folder.\n[Initialize](command:veylora.createWorkspaceConfig)",
+            "media": {
+              "svg": "resources/veylora.svg",
+              "altText": "Veylora mark"
+            }
+          },
+          {
+            "id": "dashboard",
+            "title": "Open the dashboard",
+            "description": "The Veylora view stays in the activity bar. Shortcut: Ctrl or Cmd+Shift+V.\n[Open Dashboard](command:veylora.openDashboard)",
+            "media": {
+              "svg": "resources/veylora.svg",
+              "altText": "Veylora mark"
+            }
+          }
+        ]
       }
     ]
   },
