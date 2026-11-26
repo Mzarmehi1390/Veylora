@@ -169,12 +169,14 @@ async function initializeWorkspace(output: vscode.OutputChannel): Promise<void> 
     void vscode.window.showErrorMessage('Could not initialize the Veylora workspace: ' + detail);
     return;
   } finally {
-    await vscode.workspace.fs.delete(temporaryUri).catch(error => {
-      if (!isFileNotFoundError(error)) {
-        const detail = error instanceof Error ? error.message : String(error);
+    try {
+      await vscode.workspace.fs.delete(temporaryUri);
+    } catch (cleanupError) {
+      if (!isFileNotFoundError(cleanupError)) {
+        const detail = cleanupError instanceof Error ? cleanupError.message : String(cleanupError);
         output.appendLine('Temporary workspace file cleanup failed: ' + detail);
       }
-    });
+    }
   }
 
   output.appendLine('Initialized workspace: ' + folder.uri.fsPath);
