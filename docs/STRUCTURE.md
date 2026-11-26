@@ -5,7 +5,8 @@ Veylora/
 ├── .github/
 │   └── workflows/
 │       ├── ci.yml          # Fast integration: tests, typecheck, Python compile
-│       └── build.yml       # VSIX package artifact; optional full Code-OSS compile
+│       ├── build.yml       # VSIX package artifact; optional full Code-OSS compile
+│       └── release.yml     # Tag v* → GitHub Release with VSIX + SHA256SUMS
 ├── docs/
 │   ├── HANDOFF.md          # Start here for takeover
 │   ├── AGENTS.md           # Rules for AI agents
@@ -17,6 +18,9 @@ Veylora/
 ├── extensions/
 │   └── veylora-core/       # First-party VS Code-compatible extension
 │       ├── src/extension.ts
+│       ├── src/product-layer.ts
+│       ├── src/scaffolds.ts
+│       ├── src/profile.ts
 │       ├── themes/
 │       ├── snippets/
 │       ├── resources/
@@ -34,7 +38,7 @@ Veylora/
 ├── veylora/                # LEGACY PyQt package — not the shipped runtime
 ├── legacy/                 # LEGACY prototype scripts
 ├── main.py                 # Compat entry → Code-OSS launcher
-├── package.json            # Root orchestration (v0.3.0 on develop branch)
+├── package.json            # Root orchestration (v0.4.0 on develop branch)
 ├── pyproject.toml
 ├── requirements.txt
 ├── README.md

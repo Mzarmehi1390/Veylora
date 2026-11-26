@@ -16,17 +16,24 @@ test('Veylora Core declares dashboard, health and welcome commands', () => {
   assert.ok(commands.includes('veylora.createWorkspaceConfig'));
   assert.ok(commands.includes('veylora.workspaceHealth'));
   assert.ok(commands.includes('veylora.welcome'));
+  assert.ok(commands.includes('veylora.newProject'));
+  assert.ok(commands.includes('veylora.applyModernProfile'));
   assert.equal(manifest.main, './dist/extension.js');
-  assert.equal(manifest.version, '0.3.0');
+  assert.equal(manifest.version, '0.4.0');
 });
 
-test('Veylora contributes activity bar view, theme and keybindings', () => {
+test('Veylora contributes activity bar view, themes and keybindings', () => {
   assert.ok(manifest.contributes.viewsContainers.activitybar.some((item) => item.id === 'veylora'));
   assert.ok(manifest.contributes.views.veylora.some((item) => item.id === 'veylora.workspace'));
   assert.ok(manifest.contributes.themes.some((item) => item.label === 'Veylora Dark'));
+  assert.ok(manifest.contributes.themes.some((item) => item.label === 'Veylora Light' && item.uiTheme === 'vs'));
   assert.ok(
     manifest.contributes.keybindings.some((item) => item.command === 'veylora.openDashboard')
   );
+  const walkthrough = manifest.contributes.walkthroughs.find((item) => item.id === 'veylora.gettingStarted');
+  assert.ok(walkthrough);
+  assert.ok(walkthrough.steps.some((step) => step.id === 'scaffold'));
+  assert.ok(walkthrough.steps.some((step) => step.description.includes('command:veylora.newProject')));
 });
 
 test('modern defaults configuration is declared', () => {
@@ -45,7 +52,7 @@ test('cross-platform development commands point to Node orchestration scripts', 
   assert.equal(rootManifest.scripts.bootstrap, 'node scripts/bootstrap.mjs');
   assert.equal(rootManifest.scripts['dev:watch'], 'node scripts/watch.mjs');
   assert.equal(rootManifest.scripts['dev:launch'], 'node scripts/launch.mjs');
-  assert.equal(rootManifest.version, '0.3.0');
+  assert.equal(rootManifest.version, '0.4.0');
 });
 
 test('all Veylora Node orchestration scripts parse successfully', () => {
@@ -63,4 +70,18 @@ test('all Veylora Node orchestration scripts parse successfully', () => {
     );
     assert.equal(result.status, 0, result.stderr || script);
   }
+});
+
+test('tag release workflow publishes a VSIX and checksum', async () => {
+  const workflow = await readFile(new URL('../.github/workflows/release.yml', import.meta.url), 'utf8');
+  assert.match(workflow, /tags:\s*\n\s*- "v\*"/);
+  assert.match(workflow, /contents: write/);
+  assert.match(workflow, /vsce package/);
+  assert.match(workflow, /sha256sum/);
+  assert.match(workflow, /gh release create/);
+  assert.doesNotMatch(workflow, /marketplace\.visualstudio\.com/);
+
+  const build = await readFile(new URL('../.github/workflows/build.yml', import.meta.url), 'utf8');
+  assert.match(build, /tags:\s*\n\s*- "v\*"/);
+  assert.match(build, /startsWith\(github\.ref, 'refs\/tags\/'\)/);
 });
