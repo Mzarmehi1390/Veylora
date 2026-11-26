@@ -2,9 +2,21 @@
 
 **Code Beyond Limits.**
 
-Veylora is a desktop IDE built on the open-source **Code - OSS** workbench. Rather than recreating a mature editor engine, we pin and reuse the upstream VS Code source, then build Veylora's product identity, first-party extension features, defaults and release workflow around it.
+Veylora is a modern, privacy-first desktop IDE built on the open-source **Code - OSS** workbench. Rather than recreating a mature editor engine, we pin and reuse the upstream VS Code source, then layer Veylora's product identity, first-party features, defaults and release workflow on top.
 
 > The primary runtime is Code - OSS. The original Python/PyQt6 implementation is retained as a compatibility/reference prototype and is not the application launched by the supported entrypoints.
+
+## Why Veylora
+
+| Focus | Approach |
+| --- | --- |
+| Editor engine | Code - OSS (MIT) — proven, accessible, extensible |
+| Marketplace | Open VSX (not Microsoft Marketplace) |
+| Product layer | Veylora branding, theme, dashboard, workspace tools |
+| Privacy | No forced proprietary chat agent in product defaults |
+| Builds | GitHub Actions for integration + VSIX packaging |
+
+See [ROADMAP](docs/ROADMAP.md) for the path toward a sharper, more modern experience than a stock workbench.
 
 ## What Veylora inherits from Code - OSS
 
@@ -15,11 +27,12 @@ The upstream workbench provides the mature foundation for editing, tabs, command
 - Veylora product identity and build-time branding overlay
 - Vendor-neutral Open VSX extension gallery configuration
 - First-party Veylora activity-bar workspace view and dashboard
-- Workspace initialization via .veylora/workspace.json
-- Runtime diagnostics output channel
+- Workspace initialization via `.veylora/workspace.json` (schema v2, modern defaults)
+- Workspace health check and richer runtime diagnostics
+- Keybindings (`Ctrl/Cmd+Shift+V` dashboard)
 - Veylora Dark theme and Python snippets
 - Pinned upstream source for reproducible builds
-- Automated tests and TypeScript strict type-checking for the integration layer
+- Automated tests, TypeScript strict checks, VSIX packaging via GitHub Actions
 
 ## Source and licensing
 
@@ -50,9 +63,19 @@ Launch the actual Code - OSS workbench with the Veylora extension in another ter
 npm run dev:launch
 ```
 
-The compatibility entrypoint python main.py delegates to the same Code - OSS launcher; it does not start the old PyQt prototype. The upstream watcher must already be running for a development launch.
+The compatibility entrypoint `python main.py` delegates to the same Code - OSS launcher; it does not start the old PyQt prototype. The upstream watcher must already be running for a development launch.
 
 See [the upstream workflow](docs/UPSTREAM.md) for requirements, development and update procedures.
+
+## Package the first-party extension
+
+```bash
+npm run package:extension
+```
+
+This compiles TypeScript and produces a `.vsix` under `extensions/veylora-core/`.
+
+On GitHub, the **Build** workflow uploads the VSIX as an artifact on pushes to `main` and `develop/**`.
 
 ## Repository layout
 
@@ -60,9 +83,10 @@ See [the upstream workflow](docs/UPSTREAM.md) for requirements, development and 
 vendor/code-oss/              Pinned upstream Code - OSS source (Git submodule)
 extensions/veylora-core/      First-party Veylora extension
 scripts/                      Bootstrap, launch and product branding
-docs/                         Architecture, licensing and upstream workflow
+docs/                         Architecture, roadmap, licensing and upstream workflow
 tests/                        Repository integration tests
 legacy/ and veylora/           Preserved Python/PyQt prototype code
+.github/workflows/            CI (fast) and Build (VSIX + optional full compile)
 ```
 
 ## Development checks
@@ -74,4 +98,4 @@ python -m pytest
 python -m compileall -q legacy veylora
 ```
 
-The root CI validates Veylora-owned integration code. A release pipeline must additionally build and smoke-test the full upstream workbench on Windows, macOS and Linux.
+The root CI validates Veylora-owned integration code. A release pipeline can additionally compile the full upstream workbench on Linux via the Build workflow (`workflow_dispatch` or tags).
