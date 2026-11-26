@@ -1,22 +1,48 @@
 import * as vscode from 'vscode';
+import {
+  createWorkspaceConfig,
+  escapeHtml,
+  isFileNotFoundError
+} from './workspace-config';
 
 type DashboardCommand = 'createWorkspaceConfig' | 'showDiagnostics' | 'openSettings';
 
 export function activate(context: vscode.ExtensionContext): void {
   const output = vscode.window.createOutputChannel('Veylora');
-  const commands = [
-    vscode.commands.registerCommand('veylora.openDashboard', async () => {
-      const panel = vscode.window.createWebviewPanel(
-        'veylora.dashboard',
-        'Veylora Dashboard',
-        vscode.ViewColumn.One,
-        { enableScripts: true, localResourceRoots: [context.extensionUri] }
-      );
+  let dashboardPanel: vscode.WebviewPanel | undefined;
+
+  const openDashboard = (): void => {
+    if (dashboardPanel) {
+      dashboardPanel.reveal(vscode.ViewColumn.One);
+      return;
+    }
+
+    const panel = vscode.window.createWebviewPanel(
+      'veylora.dashboard',
+      'Veylora Dashboard',
+      vscode.ViewColumn.One,
+      { enableScripts: true, localResourceRoots: [context.extensionUri] }
+    );
+    dashboardPanel = panel;
+
+    try {
       panel.webview.html = renderDashboard(panel.webview, context.extensionUri);
-      panel.webview.onDidReceiveMessage(
+      const messageSubscription = panel.webview.onDidReceiveMessage(
         (message: unknown) => handleDashboardMessage(message, output)
       );
-    }),
+      panel.onDidDispose(() => {
+        messageSubscription.dispose();
+        if (dashboardPanel === panel) dashboardPanel = undefined;
+      });
+    } catch (error) {
+      dashboardPanel = undefined;
+      panel.dispose();
+      throw error;
+    }
+  };
+
+  const commands = [
+    vscode.commands.registerCommand('veylora.openDashboard', openDashboard),
     vscode.commands.registerCommand('veylora.createWorkspaceConfig', () => initializeWorkspace(output)),
     vscode.commands.registerCommand('veylora.showDiagnostics', () => writeDiagnostics(output)),
     vscode.commands.registerCommand('veylora.openSettings', () =>
@@ -26,8 +52,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
   const view = vscode.window.registerWebviewViewProvider(
     'veylora.workspace',
-    new WorkspaceViewProvider(context.extensionUri, output),
-    { webviewOptions: { retainContextWhenHidden: true } }
+    new WorkspaceViewProvider(context.extensionUri, output)
   );
   const statusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
   statusBar.text = '$(code) Veylora';
@@ -36,7 +61,14 @@ export function activate(context: vscode.ExtensionContext): void {
   if (vscode.workspace.getConfiguration('veylora.workspace').get<boolean>('showStatusBarItem', true)) {
     statusBar.show();
   }
-  context.subscriptions.push(output, ...commands, view, statusBar);
+
+  context.subscriptions.push(
+    output,
+    ...commands,
+    view,
+    statusBar,
+    { dispose: () => dashboardPanel?.dispose() }
+  );
   output.appendLine('Veylora Core activated.');
 }
 
@@ -53,17 +85,22 @@ class WorkspaceViewProvider implements vscode.WebviewViewProvider {
   resolveWebviewView(view: vscode.WebviewView): void {
     view.webview.options = { enableScripts: true, localResourceRoots: [this.extensionUri] };
     view.webview.html = renderDashboard(view.webview, this.extensionUri);
-    view.webview.onDidReceiveMessage(
+    const messageSubscription = view.webview.onDidReceiveMessage(
       (message: unknown) => handleDashboardMessage(message, this.output)
     );
+    view.onDidDispose(() => messageSubscription.dispose());
   }
 }
 
 async function handleDashboardMessage(message: unknown, output: vscode.OutputChannel): Promise<void> {
   if (!isDashboardMessage(message)) return;
   switch (message.command) {
-    case 'createWorkspaceConfig': await initializeWorkspace(output); break;
-    case 'showDiagnostics': writeDiagnostics(output); break;
+    case 'createWorkspaceConfig':
+      await initializeWorkspace(output);
+      break;
+    case 'showDiagnostics':
+      writeDiagnostics(output);
+      break;
     case 'openSettings':
       await vscode.commands.executeCommand('workbench.action.openSettings', 'veylora');
       break;
@@ -73,7 +110,9 @@ async function handleDashboardMessage(message: unknown, output: vscode.OutputCha
 function isDashboardMessage(value: unknown): value is { command: DashboardCommand } {
   if (typeof value !== 'object' || value === null || !('command' in value)) return false;
   const command = (value as { command?: unknown }).command;
-  return command === 'createWorkspaceConfig' || command === 'showDiagnostics' || command === 'openSettings';
+  return command === 'createWorkspaceConfig' ||
+    command === 'showDiagnostics' ||
+    command === 'openSettings';
 }
 
 async function initializeWorkspace(output: vscode.OutputChannel): Promise<void> {
@@ -85,39 +124,71 @@ async function initializeWorkspace(output: vscode.OutputChannel): Promise<void> 
 
   const directory = vscode.Uri.joinPath(folder.uri, '.veylora');
   const configUri = vscode.Uri.joinPath(directory, 'workspace.json');
+  let configExists = false;
+
   try {
-    await vscode.workspace.fs.stat(configUri);
+    const stat = await vscode.workspace.fs.stat(configUri);
+    if ((stat.type & vscode.FileType.Directory) !== 0) {
+      throw new Error('The Veylora workspace configuration path is a directory.');
+    }
+    configExists = true;
+  } catch (error) {
+    if (!isFileNotFoundError(error)) {
+      const detail = error instanceof Error ? error.message : String(error);
+      output.appendLine('Workspace configuration inspection failed: ' + detail);
+      void vscode.window.showErrorMessage('Could not inspect the Veylora workspace configuration: ' + detail);
+      return;
+    }
+  }
+
+  if (configExists) {
     const choice = await vscode.window.showWarningMessage(
       'A Veylora workspace configuration already exists. Replace it?',
       { modal: true },
       'Replace'
     );
     if (choice !== 'Replace') return;
-  } catch {
-    // A missing file is the expected first-run path.
   }
 
-  const config = {
-    schemaVersion: 1,
-    name: folder.name,
-    createdAt: new Date().toISOString(),
-    editor: { formatOnSave: true, tabSize: 2 },
-    tasks: []
-  };
+  const config = createWorkspaceConfig(folder.name);
+  const temporaryUri = vscode.Uri.joinPath(
+    directory,
+    `workspace.json.${createNonce()}.tmp`
+  );
+
   try {
     await vscode.workspace.fs.createDirectory(directory);
     await vscode.workspace.fs.writeFile(
-      configUri,
+      temporaryUri,
       new TextEncoder().encode(JSON.stringify(config, null, 2) + '\n')
     );
-    output.appendLine('Initialized workspace: ' + folder.uri.fsPath);
-    void vscode.window.showInformationMessage('Veylora workspace initialized.');
-    const document = await vscode.workspace.openTextDocument(configUri);
-    await vscode.window.showTextDocument(document, vscode.ViewColumn.One);
+    await vscode.workspace.fs.rename(temporaryUri, configUri, { overwrite: configExists });
   } catch (error) {
     const detail = error instanceof Error ? error.message : String(error);
     output.appendLine('Workspace initialization failed: ' + detail);
     void vscode.window.showErrorMessage('Could not initialize the Veylora workspace: ' + detail);
+    return;
+  } finally {
+    try {
+      await vscode.workspace.fs.delete(temporaryUri);
+    } catch (cleanupError) {
+      if (!isFileNotFoundError(cleanupError)) {
+        const detail = cleanupError instanceof Error ? cleanupError.message : String(cleanupError);
+        output.appendLine('Temporary workspace file cleanup failed: ' + detail);
+      }
+    }
+  }
+
+  output.appendLine('Initialized workspace: ' + folder.uri.fsPath);
+  void vscode.window.showInformationMessage('Veylora workspace initialized.');
+
+  try {
+    const document = await vscode.workspace.openTextDocument(configUri);
+    await vscode.window.showTextDocument(document, vscode.ViewColumn.One);
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    output.appendLine('Workspace configuration was created but could not be opened: ' + detail);
+    void vscode.window.showWarningMessage('Workspace configuration was created, but could not be opened automatically.');
   }
 }
 
@@ -147,10 +218,10 @@ function renderDashboard(webview: vscode.Webview, extensionUri: vscode.Uri): str
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${webview.cspSource}; style-src ${webview.cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}';">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; base-uri 'none'; form-action 'none'; img-src ${webview.cspSource}; style-src 'nonce-${nonce}'; script-src 'nonce-${nonce}';">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Veylora</title>
-  <style>
+  <style nonce="${nonce}">
     :root { color-scheme: dark; }
     body { margin: 0; padding: 22px 16px; color: var(--vscode-foreground); font-family: var(--vscode-font-family); }
     .brand { display: flex; align-items: center; gap: 10px; margin-bottom: 24px; }
@@ -183,14 +254,5 @@ function renderDashboard(webview: vscode.Webview, extensionUri: vscode.Uri): str
 function createNonce(): string {
   const values = new Uint8Array(24);
   crypto.getRandomValues(values);
-  return Array.from(values, (value) => value.toString(16).padStart(2, '0')).join('');
-}
-
-function escapeHtml(value: string): string {
-  return value.replace(/[&<>"']/g, (character) => {
-    const entities: Record<string, string> = {
-      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-    };
-    return entities[character] ?? character;
-  });
+  return Array.from(values, value => value.toString(16).padStart(2, '0')).join('');
 }

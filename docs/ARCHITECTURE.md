@@ -21,7 +21,9 @@ Both npm run dev:launch and python main.py use this path. Keeping a single launc
 
 ## Extension boundaries
 
-The first-party extension uses the stable VS Code extension API. It avoids patching private workbench internals for ordinary workspace features. Webview content uses a restrictive Content Security Policy, message validation and extension-owned resources.
+The first-party extension uses the stable VS Code extension API. It avoids patching private workbench internals for ordinary workspace features. Webviews use nonce-based script and style policies, validate messages, escape workspace-derived HTML, and dispose message listeners with their panel or view lifecycle. The dashboard panel is reused while open, and the sidebar view does not retain a hidden webview context unnecessarily.
+
+Workspace initialization is split into a pure configuration module and a VS Code adapter. Existing configuration is replaced only after explicit confirmation; only a genuine FileNotFound response is treated as a first-run path. New content is staged in the same directory and moved into place with the workspace filesystem's rename operation, with temporary-file cleanup and separate reporting if opening the saved document fails.
 
 Future first-party capabilities should be added as focused modules or extensions rather than coupling product features to private workbench implementation details.
 
