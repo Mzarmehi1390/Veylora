@@ -4,6 +4,8 @@
 
 We do not reimplement the editor engine. Differentiation comes from product defaults, first-party experience, privacy posture, packaging and focused workflows.
 
+**Handoff:** see [HANDOFF.md](./HANDOFF.md) for current branch status and agent instructions.
+
 ## Guiding principles
 
 1. **Reuse the best of Code - OSS** — editing, LSP, terminal, debugger, extensions.
@@ -12,30 +14,32 @@ We do not reimplement the editor engine. Differentiation comes from product defa
 4. **Privacy first** — no forced telemetry or proprietary chat agents in product.json.
 5. **Ship continuously** — integration CI on every change; reproducible builds via GitHub Actions.
 
-## Phase 0 — Foundation (done / in progress)
+## Phase 0 — Foundation
 
 - [x] Pin Code - OSS as Git submodule
 - [x] Veylora product branding overlay + Open VSX
 - [x] First-party `veylora-core` extension (dashboard, workspace init, diagnostics)
 - [x] Cross-platform launch / watch / bootstrap scripts
 - [x] Integration CI (tests + typecheck + Python prototype compile)
-- [ ] Package Veylora Core as VSIX artifact on every main build
-- [ ] Document release and full workbench build path
+- [x] Package Veylora Core as VSIX artifact (Build workflow on `develop/modern-foundation`)
+- [x] Document release path and full workbench compile (manual/tag job)
 
-## Phase 1 — Modern product layer (current)
+## Phase 1 — Modern product layer (in progress on `develop/modern-foundation`)
 
-- [ ] Richer workspace dashboard and onboarding
-- [ ] First-run welcome experience and sensible modern defaults
-- [ ] Stronger Veylora Dark (and optional light) theme
-- [ ] Status bar / command palette polish
-- [ ] Keybindings and command discoverability
-- [ ] Workspace health checks (config present, recommended extensions hints)
-- [ ] CI job that compiles and packages the extension as a downloadable artifact
+- [x] Richer workspace dashboard
+- [x] Init hint + schema v2 modern defaults in workspace.json
+- [x] Stronger Veylora Dark theme
+- [x] Status bar + command palette commands + keybindings
+- [x] Workspace health check
+- [x] CI job that packages the extension as a downloadable artifact
+- [ ] Merge develop branch to `main` and verify Actions on default branch
+- [ ] Optional light theme
+- [ ] First-run walkthrough polish
 
 ## Phase 2 — Differentiation
 
 - [ ] Project templates / quick-start scaffolds (Python, Node, web)
-- [ ] Built-in task recipes and run configurations helpers
+- [ ] Built-in task recipes and run configuration helpers
 - [ ] Optional local AI assistant integration points (provider-agnostic, user-controlled)
 - [ ] Performance-oriented default settings profile
 - [ ] Multi-root workspace helpers
@@ -43,8 +47,8 @@ We do not reimplement the editor engine. Differentiation comes from product defa
 
 ## Phase 3 — Release quality
 
-- [ ] Full Code - OSS compile + package on Linux (GitHub Actions)
-- [ ] Windows and macOS release builds (self-hosted or GitHub-hosted where feasible)
+- [ ] Full Code - OSS compile + package on Linux (harden Actions job)
+- [ ] Windows and macOS release builds where feasible
 - [ ] Signed installers / portable archives where practical
 - [ ] Automated smoke test of launched workbench
 - [ ] Versioned GitHub Releases with notes and checksums

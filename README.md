@@ -6,6 +6,19 @@ Veylora is a modern, privacy-first desktop IDE built on the open-source **Code -
 
 > The primary runtime is Code - OSS. The original Python/PyQt6 implementation is retained as a compatibility/reference prototype and is not the application launched by the supported entrypoints.
 
+## Handoff / continue development
+
+| Doc | Purpose |
+| --- | --- |
+| **[docs/HANDOFF.md](docs/HANDOFF.md)** | **Start here** — status, rules, next tasks for a new AI or developer |
+| [docs/AGENTS.md](docs/AGENTS.md) | Short rules for coding agents |
+| [docs/STRUCTURE.md](docs/STRUCTURE.md) | Directory map and launch mental model |
+| [docs/ROADMAP.md](docs/ROADMAP.md) | Phased product plan |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Layered architecture |
+| [docs/UPSTREAM.md](docs/UPSTREAM.md) | Submodule and branding workflow |
+
+Work branch for the latest product-layer work (if not yet merged): `develop/modern-foundation`.
+
 ## Why Veylora
 
 | Focus | Approach |
@@ -15,8 +28,6 @@ Veylora is a modern, privacy-first desktop IDE built on the open-source **Code -
 | Product layer | Veylora branding, theme, dashboard, workspace tools |
 | Privacy | No forced proprietary chat agent in product defaults |
 | Builds | GitHub Actions for integration + VSIX packaging |
-
-See [ROADMAP](docs/ROADMAP.md) for the path toward a sharper, more modern experience than a stock workbench.
 
 ## What Veylora inherits from Code - OSS
 
@@ -42,8 +53,6 @@ The upstream source is Microsoft's Code - OSS repository, available under the MI
 
 Requirements: Git, Node.js 22 or newer, Corepack, and the native build prerequisites documented by the upstream Code - OSS project.
 
-Clone with submodules:
-
 ```bash
 git clone --recurse-submodules https://github.com/Mzarmehi1390/Veylora.git
 cd Veylora
@@ -51,21 +60,12 @@ npm run bootstrap
 npm run brand
 ```
 
-Run the upstream watcher in one terminal:
+Terminal A: `npm run dev:watch`  
+Terminal B: `npm run dev:launch`
 
-```bash
-npm run dev:watch
-```
+`python main.py` uses the same Code - OSS launcher (not the PyQt prototype).
 
-Launch the actual Code - OSS workbench with the Veylora extension in another terminal:
-
-```bash
-npm run dev:launch
-```
-
-The compatibility entrypoint `python main.py` delegates to the same Code - OSS launcher; it does not start the old PyQt prototype. The upstream watcher must already be running for a development launch.
-
-See [the upstream workflow](docs/UPSTREAM.md) for requirements, development and update procedures.
+See [UPSTREAM.md](docs/UPSTREAM.md) for details.
 
 ## Package the first-party extension
 
@@ -73,21 +73,21 @@ See [the upstream workflow](docs/UPSTREAM.md) for requirements, development and 
 npm run package:extension
 ```
 
-This compiles TypeScript and produces a `.vsix` under `extensions/veylora-core/`.
-
-On GitHub, the **Build** workflow uploads the VSIX as an artifact on pushes to `main` and `develop/**`.
+GitHub **Build** workflow uploads the VSIX as an artifact on pushes to `main` and `develop/**`.
 
 ## Repository layout
 
 ```text
-vendor/code-oss/              Pinned upstream Code - OSS source (Git submodule)
-extensions/veylora-core/      First-party Veylora extension
-scripts/                      Bootstrap, launch and product branding
-docs/                         Architecture, roadmap, licensing and upstream workflow
-tests/                        Repository integration tests
-legacy/ and veylora/           Preserved Python/PyQt prototype code
-.github/workflows/            CI (fast) and Build (VSIX + optional full compile)
+vendor/code-oss/              Pinned upstream Code - OSS (submodule)
+extensions/veylora-core/      First-party extension
+scripts/                      Bootstrap, launch, branding
+docs/                         Handoff, architecture, roadmap, agents
+tests/                        Integration tests
+legacy/ and veylora/           PyQt prototype (reference only)
+.github/workflows/            CI + Build
 ```
+
+Full map: [docs/STRUCTURE.md](docs/STRUCTURE.md).
 
 ## Development checks
 
@@ -98,4 +98,4 @@ python -m pytest
 python -m compileall -q legacy veylora
 ```
 
-The root CI validates Veylora-owned integration code. A release pipeline can additionally compile the full upstream workbench on Linux via the Build workflow (`workflow_dispatch` or tags).
+Integration CI is the default gate. Full workbench compile is available via the Build workflow (`workflow_dispatch` or tags).
