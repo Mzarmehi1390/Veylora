@@ -1,1 +1,101 @@
-PLACEHOLDER
+name: Build
+
+on:
+  push:
+    branches: [main, "develop/**"]
+    tags:
+      - "v*"
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      package_vsix:
+        description: Package Veylora Core as VSIX
+        type: boolean
+        default: true
+
+concurrency:
+  group: build-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  package-extension:
+    name: Package Veylora Core
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install and compile extension
+        working-directory: extensions/veylora-core
+        run: |
+          npm install
+          npm run compile
+
+      - name: Package VSIX
+        working-directory: extensions/veylora-core
+        run: |
+          npx --yes @vscode/vsce package --no-dependencies --allow-missing-repository
+          ls -la *.vsix
+
+      - name: Upload VSIX artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: veylora-core-vsix
+          path: extensions/veylora-core/*.vsix
+          if-no-files-found: error
+          retention-days: 30
+
+  # Full Code - OSS compile is expensive. Trigger manually or from release tags.
+  compile-workbench-linux:
+    name: Compile Code-OSS (Linux)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/')
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: System dependencies for Electron/native builds
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential pkg-config libx11-dev libxkbfile-dev libsecret-1-dev
+
+      - name: Bootstrap upstream and extension
+        run: |
+          npm run bootstrap
+          npm run brand
+
+      - name: Compile Veylora Core
+        run: npm run typecheck
+
+      - name: Compile Code - OSS (gulp compile)
+        working-directory: vendor/code-oss
+        run: |
+          corepack enable
+          # Prefer the project's documented compile entry; fall back gracefully.
+          if corepack pnpm run compile --help >/dev/null 2>&1; then
+            corepack pnpm run compile
+          else
+            corepack pnpm exec gulp compile
+          fi
+
+      - name: Upload compile markers
+        uses: actions/upload-artifact@v4
+        with:
+          name: code-oss-compile-linux
+          path: |
+            vendor/code-oss/out
+            extensions/veylora-core/dist
+          retention-days: 7
+          if-no-files-found: warn
