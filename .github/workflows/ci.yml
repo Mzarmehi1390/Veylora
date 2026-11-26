@@ -2,32 +2,49 @@ name: CI
 
 on:
   push:
-    branches: [main, "architecture/**"]
+    branches: [main, "architecture/**", "develop/**"]
   pull_request:
     branches: [main]
 
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   integration:
+    name: Integration
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: false
+
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+
       - name: Install extension dependencies
         run: npm --prefix extensions/veylora-core install
+
       - name: Test repository integration
         run: npm test
-      - name: Type-check Veylora Core
+
+      - name: Type-check and compile Veylora Core
         run: npm run typecheck
+
       - name: Validate legacy Python source
         run: |
           python -m pip install --upgrade pip
           python -m pip install pytest
           python -m compileall -q legacy veylora
           PYTHONPATH=. pytest
+
+      - name: Verify orchestration scripts parse
+        run: |
+          for f in scripts/*.mjs; do
+            node --check "$f"
+          done

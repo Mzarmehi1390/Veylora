@@ -1,8 +1,8 @@
 {
   "name": "veylora-core",
   "displayName": "Veylora Core",
-  "description": "First-party workspace, onboarding and diagnostics features for Veylora IDE.",
-  "version": "0.2.0",
+  "description": "First-party workspace, onboarding, diagnostics and modern defaults for Veylora IDE.",
+  "version": "0.3.0",
   "publisher": "veylora",
   "license": "MIT",
   "engines": {
@@ -10,7 +10,14 @@
   },
   "categories": [
     "Other",
+    "Themes",
     "Visualization"
+  ],
+  "keywords": [
+    "veylora",
+    "ide",
+    "dashboard",
+    "workspace"
   ],
   "activationEvents": [
     "onStartupFinished"
@@ -20,19 +27,45 @@
     "commands": [
       {
         "command": "veylora.openDashboard",
-        "title": "Veylora: Open Dashboard"
+        "title": "Veylora: Open Dashboard",
+        "category": "Veylora"
       },
       {
         "command": "veylora.createWorkspaceConfig",
-        "title": "Veylora: Initialize Workspace"
+        "title": "Veylora: Initialize Workspace",
+        "category": "Veylora"
       },
       {
         "command": "veylora.showDiagnostics",
-        "title": "Veylora: Show Runtime Diagnostics"
+        "title": "Veylora: Show Runtime Diagnostics",
+        "category": "Veylora"
       },
       {
         "command": "veylora.openSettings",
-        "title": "Veylora: Open Settings"
+        "title": "Veylora: Open Settings",
+        "category": "Veylora"
+      },
+      {
+        "command": "veylora.welcome",
+        "title": "Veylora: Welcome",
+        "category": "Veylora"
+      },
+      {
+        "command": "veylora.workspaceHealth",
+        "title": "Veylora: Workspace Health Check",
+        "category": "Veylora"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "veylora.openDashboard",
+        "key": "ctrl+shift+v",
+        "mac": "cmd+shift+v"
+      },
+      {
+        "command": "veylora.showDiagnostics",
+        "key": "ctrl+shift+alt+d",
+        "mac": "cmd+shift+alt+d"
       }
     ],
     "viewsContainers": {
@@ -60,6 +93,16 @@
           "type": "boolean",
           "default": true,
           "description": "Show the Veylora dashboard shortcut in the status bar."
+        },
+        "veylora.workspace.autoInitHint": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show a one-time hint to initialize a Veylora workspace when a folder is opened without .veylora/workspace.json."
+        },
+        "veylora.modernDefaults.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Prefer modern editor defaults when initializing a new Veylora workspace configuration."
         }
       }
     },
@@ -79,7 +122,8 @@
   },
   "scripts": {
     "compile": "tsc -p ./",
-    "watch": "tsc -watch -p ./"
+    "watch": "tsc -watch -p ./",
+    "package": "npm run compile && npx --yes @vscode/vsce package --no-dependencies --allow-missing-repository"
   },
   "devDependencies": {
     "@types/vscode": "^1.146.0",
