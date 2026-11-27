@@ -33,9 +33,17 @@ export const MODERN_PROFILE: Record<string, unknown> = {
     '**/venv': true,
     '**/dist': true
   },
+  'files.exclude': {
+    '**/.git': true,
+    '**/.DS_Store': true,
+    '**/Thumbs.db': true
+  },
   'explorer.compactFolders': false,
   'telemetry.telemetryLevel': 'off',
-  'git.autofetch': true
+  'telemetry.feedback.enabled': false,
+  'update.mode': 'manual',
+  'git.autofetch': true,
+  'git.enableSmartCommit': true
 };
 
 export function profileEntries(): Array<[string, unknown]> {
