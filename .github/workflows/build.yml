@@ -28,6 +28,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: 'npm'
+          cache-dependency-path: extensions/veylora-core/package-lock.json
 
       - name: Install and compile extension
         working-directory: extensions/veylora-core
