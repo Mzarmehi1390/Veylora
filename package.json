@@ -1,7 +1,7 @@
 {
   "name": "veylora",
   "private": true,
-  "version": "0.4.4",
+  "version": "0.4.5",
   "description": "A modern, privacy-first desktop IDE built on the open-source Code - OSS workbench.",
   "engines": {
     "node": ">=22"
