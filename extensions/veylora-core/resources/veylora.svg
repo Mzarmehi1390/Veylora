@@ -1,10 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" aria-hidden="true">
   <defs>
-    <linearGradient id="v" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#8b7cff"/>
-      <stop offset="1" stop-color="#42c7d8"/>
+    <linearGradient id="veylora" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#8B7CFF"/>
+      <stop offset="1" stop-color="#42C7D8"/>
     </linearGradient>
   </defs>
-  <circle cx="32" cy="32" r="30" fill="none" stroke="url(#v)" stroke-width="2" opacity="0.35"/>
-  <path fill="url(#v)" d="M10 14h10l12 26 12-26h10L34 54h-4z"/>
+  <circle cx="32" cy="32" r="28" fill="none" stroke="url(#veylora)" stroke-width="2.4" opacity="0.45"/>
+  <path fill="url(#veylora)" d="M13.5 15.5h10.2L32 41.2 40.3 15.5H50.5L34.8 52.5h-5.6z"/>
 </svg>
