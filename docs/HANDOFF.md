@@ -14,7 +14,7 @@ This document is the single entry point for another AI or developer taking over.
 | --- | --- | --- |
 | **Runtime** | Real desktop IDE | `vendor/code-oss` (Git submodule → `microsoft/vscode`) |
 | **Product identity** | Name, Open VSX, no MS Marketplace | `scripts/apply-branding.mjs` → patches `product.json` |
-| **First-party features** | Dashboard, workspace, theme, diagnostics, scaffolds, profile, multi-root helpers, optional AI points | `extensions/veylora-core/` |
+| **First-party features** | Dashboard, workspace, theme, diagnostics, scaffolds, profile, multi-root helpers, optional AI points, tasks helpers | `extensions/veylora-core/` |
 | **Dev orchestration** | Bootstrap / watch / launch | `scripts/*.mjs` |
 | **Legacy prototype** | Old PyQt6 editor — **reference only** | `veylora/`, `legacy/` |
 | **Compat entry** | `python main.py` → same Code-OSS launcher | `main.py` |
@@ -28,7 +28,7 @@ This document is the single entry point for another AI or developer taking over.
 | Ref | Meaning |
 | --- | --- |
 | `main` | Last merged foundation (Code-OSS adoption, Core ~0.2, basic CI) |
-| `develop/modern-foundation` | **Preferred work branch** — Core 0.4.5, scaffolds, modern profile, light theme, walkthrough, multi-root helpers, optional AI integration points, improved product icon, restored dashboard/commands entrypoint, release workflow |
+| `develop/modern-foundation` | **Preferred work branch** — Core 0.4.6 (tasks helpers, richer health, profile refinements), scaffolds, modern profile, light theme, walkthrough, multi-root helpers, optional AI integration points, improved product icon, restored dashboard/commands entrypoint, release workflow |
 
 If `develop/modern-foundation` is not yet merged, continue from that branch (or merge it to `main` first).
 
@@ -44,13 +44,15 @@ Pinned upstream example (verify with `git submodule status`):
 - [x] Veylora Core: dashboard webview, workspace init (`.veylora/workspace.json`), diagnostics
 - [x] Core 0.3: health check, welcome command, keybinding, init hint, schema v2 modern defaults, richer theme
 - [x] Core 0.4: project scaffolds for Python, Node, and static web (skip existing files, stamp `.veylora/workspace.json`)
-- [x] Modern settings profile (telemetry off, quieter watcher/search, folder-scoped)
+- [x] Modern settings profile (telemetry off, quieter watcher/search, folder-scoped) + refinements
 - [x] Veylora Light theme + getting-started walkthrough
 - [x] Multi-root workspace helpers (folder picker, apply profile to all, health/dashboard awareness)
 - [x] Optional AI assistant integration points (provider-agnostic, user-controlled, off by default)
 - [x] Improved product icon (modern gradient V mark for activity bar, walkthrough, and installer resources)
 - [x] Dashboard panel reuse + live AI status + Getting Started button
-- [x] Additional keybindings for new project and health check
+- [x] Additional keybindings for new project, health check, and ensure tasks
+- [x] Tasks helpers: pure merge + `veylora.ensureTasks` command (scaffold-aware starters)
+- [x] Richer workspace health (tasks.json / launch.json / .git)
 - [x] Restored complete `extension.ts` entrypoint (previously placeholder) wiring all commands, sidebar, status bar, CSP webviews
 - [x] Integration CI
 - [x] Build workflow that packages VSIX
