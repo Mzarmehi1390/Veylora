@@ -40,10 +40,10 @@ We do not reimplement the editor engine. Differentiation comes from product defa
 
 - [x] Project templates / quick-start scaffolds (Python, Node, static web; never overwrite existing files)
 - [x] Built-in task recipes and run configuration helpers (per scaffold; existing tasks are kept)
-- [ ] Optional local AI assistant integration points (provider-agnostic, user-controlled)
+- [x] Optional local AI assistant integration points (provider-agnostic, user-controlled OpenAI-compatible endpoint, off by default)
 - [x] Performance-oriented default settings profile
 - [x] Multi-root workspace helpers
-- [ ] Improved icons and product resources for installers
+- [x] Improved icons and product resources for installers (activity-bar / dashboard mark refined; full installer icons still later)
 
 ## Phase 3 — Release quality
 
