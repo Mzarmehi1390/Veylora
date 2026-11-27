@@ -12,6 +12,7 @@ import {
 import { applyModernProfile, applyModernProfileToAll } from './profile';
 import { aiSettingsFilter, readAiStatus } from './ai';
 import { primaryFolderLabel, selectWorkspaceFolder, workspaceFolderCount } from './workspace';
+import { mergeTasks, starterTasksFor, type TasksDocument } from './tasks';
 
 const OUTPUT_CHANNEL = 'Veylora';
 const WORKSPACE_CONFIG_REL = '.veylora/workspace.json';
@@ -63,7 +64,8 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand('veylora.applyProfileToAll', () => applyModernProfileToAll(output)),
     vscode.commands.registerCommand('veylora.configureAI', () =>
       vscode.commands.executeCommand('workbench.action.openSettings', aiSettingsFilter())
-    )
+    ),
+    vscode.commands.registerCommand('veylora.ensureTasks', () => ensureTasks())
   );
 
   void maybeShowInitHint(context);
@@ -148,6 +150,9 @@ function openDashboard(context: vscode.ExtensionContext): void {
       case 'configureAI':
         await vscode.commands.executeCommand('veylora.configureAI');
         break;
+      case 'ensureTasks':
+        await vscode.commands.executeCommand('veylora.ensureTasks');
+        break;
       case 'refresh':
         await updateDashboardHtml(dashboardPanel!.webview);
         break;
@@ -202,6 +207,7 @@ async function updateDashboardHtml(webview: vscode.Webview): Promise<void> {
       <button data-cmd="health">Health Check</button>
       <button class="secondary" data-cmd="newProject">New Project</button>
       <button class="secondary" data-cmd="applyProfile">Apply Modern Profile</button>
+      <button class="secondary" data-cmd="ensureTasks">Ensure Tasks</button>
     </div>
   </div>
 
@@ -269,6 +275,9 @@ class VeyloraSidebarProvider implements vscode.WebviewViewProvider {
           break;
         case 'configureAI':
           await vscode.commands.executeCommand('veylora.configureAI');
+          break;
+        case 'ensureTasks':
+          await vscode.commands.executeCommand('veylora.ensureTasks');
           break;
         case 'refresh':
           await updateDashboardHtml(webviewView.webview);
@@ -399,6 +408,48 @@ async function newProjectFromTemplate(): Promise<void> {
   if (dashboardPanel) void updateDashboardHtml(dashboardPanel.webview);
 }
 
+async function ensureTasks(): Promise<void> {
+  const folder = await selectWorkspaceFolder('Ensure common tasks in which folder?');
+  if (!folder) {
+    void vscode.window.showWarningMessage('Open a project folder first.');
+    return;
+  }
+
+  const tasksUri = vscode.Uri.joinPath(folder.uri, '.vscode/tasks.json');
+  let existing: TasksDocument | undefined;
+  try {
+    const raw = await vscode.workspace.fs.readFile(tasksUri);
+    existing = JSON.parse(new TextDecoder().decode(raw)) as TasksDocument;
+  } catch {
+    existing = undefined;
+  }
+
+  // Infer scaffold from workspace config if present
+  let scaffoldId: string | undefined;
+  try {
+    const configUri = vscode.Uri.joinPath(folder.uri, WORKSPACE_CONFIG_REL);
+    const raw = await vscode.workspace.fs.readFile(configUri);
+    const parsed = JSON.parse(new TextDecoder().decode(raw));
+    scaffoldId = parsed?.scaffold?.id;
+  } catch {
+    // none
+  }
+
+  const incoming = starterTasksFor(scaffoldId);
+  const merged = mergeTasks(existing, incoming);
+  const encoder = new TextEncoder();
+  const dir = vscode.Uri.joinPath(folder.uri, '.vscode');
+  try {
+    await vscode.workspace.fs.createDirectory(dir);
+  } catch {
+    // exists
+  }
+  await vscode.workspace.fs.writeFile(tasksUri, encoder.encode(JSON.stringify(merged, null, 2) + '\n'));
+  output.appendLine(`Ensured tasks in ${tasksUri.fsPath} (scaffold: ${scaffoldId ?? 'generic'}).`);
+  void vscode.window.showInformationMessage('Common tasks ensured in .vscode/tasks.json.');
+  if (dashboardPanel) void updateDashboardHtml(dashboardPanel.webview);
+}
+
 async function workspaceHealth(): Promise<void> {
   const folder = await selectWorkspaceFolder('Run health check on which folder?');
   if (!folder) {
@@ -424,6 +475,30 @@ async function workspaceHealth(): Promise<void> {
     lines.push('✓ .vscode/settings.json present');
   } catch {
     lines.push('○ .vscode/settings.json not found (modern profile not applied yet)');
+  }
+
+  const tasksUri = vscode.Uri.joinPath(folder.uri, '.vscode/tasks.json');
+  try {
+    await vscode.workspace.fs.stat(tasksUri);
+    lines.push('✓ .vscode/tasks.json present');
+  } catch {
+    lines.push('○ .vscode/tasks.json missing — run Ensure Common Tasks');
+  }
+
+  const launchUri = vscode.Uri.joinPath(folder.uri, '.vscode/launch.json');
+  try {
+    await vscode.workspace.fs.stat(launchUri);
+    lines.push('✓ .vscode/launch.json present');
+  } catch {
+    lines.push('○ .vscode/launch.json not found');
+  }
+
+  const gitUri = vscode.Uri.joinPath(folder.uri, '.git');
+  try {
+    await vscode.workspace.fs.stat(gitUri);
+    lines.push('✓ .git directory present');
+  } catch {
+    lines.push('○ No .git directory (not a git repository yet)');
   }
 
   const ai = readAiStatus();
