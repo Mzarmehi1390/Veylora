@@ -14,7 +14,7 @@ This document is the single entry point for another AI or developer taking over.
 | --- | --- | --- |
 | **Runtime** | Real desktop IDE | `vendor/code-oss` (Git submodule → `microsoft/vscode`) |
 | **Product identity** | Name, Open VSX, no MS Marketplace | `scripts/apply-branding.mjs` → patches `product.json` |
-| **First-party features** | Dashboard, workspace, theme, diagnostics, scaffolds, profile, multi-root helpers | `extensions/veylora-core/` |
+| **First-party features** | Dashboard, workspace, theme, diagnostics, scaffolds, profile, multi-root helpers, optional AI points | `extensions/veylora-core/` |
 | **Dev orchestration** | Bootstrap / watch / launch | `scripts/*.mjs` |
 | **Legacy prototype** | Old PyQt6 editor — **reference only** | `veylora/`, `legacy/` |
 | **Compat entry** | `python main.py` → same Code-OSS launcher | `main.py` |
@@ -28,7 +28,7 @@ This document is the single entry point for another AI or developer taking over.
 | Ref | Meaning |
 | --- | --- |
 | `main` | Last merged foundation (Code-OSS adoption, Core ~0.2, basic CI) |
-| `develop/modern-foundation` | **Preferred work branch** — Core 0.4.1, scaffolds, modern profile, light theme, walkthrough, multi-root helpers, release workflow |
+| `develop/modern-foundation` | **Preferred work branch** — Core 0.4.2, scaffolds, modern profile, light theme, walkthrough, multi-root helpers, optional AI integration points, release workflow |
 
 If `develop/modern-foundation` is not yet merged, continue from that branch (or merge it to `main` first).
 
@@ -47,6 +47,7 @@ Pinned upstream example (verify with `git submodule status`):
 - [x] Modern settings profile (telemetry off, quieter watcher/search, folder-scoped)
 - [x] Veylora Light theme + getting-started walkthrough
 - [x] Multi-root workspace helpers (folder picker, apply profile to all, health/dashboard awareness)
+- [x] Optional AI assistant integration points (provider-agnostic, user-controlled, off by default)
 - [x] Integration CI
 - [x] Build workflow that packages VSIX
 - [x] Release workflow: tag `v*` publishes the VSIX plus `SHA256SUMS` on a GitHub Release
@@ -58,9 +59,8 @@ Pinned upstream example (verify with `git submodule status`):
 
 1. **Merge** `develop/modern-foundation` → `main` if still open; confirm CI + Build green.
 2. **Full Linux workbench compile** — harden `compile-workbench-linux` job against the pinned gulp/pnpm scripts.
-3. **Optional AI hooks** — provider-agnostic, user-configured; no vendor lock-in in core product.json.
-4. **Improved product icons** for installers.
-5. **Open VSX publish** for `veylora-core` when ready.
-6. **Installers** — signed or portable archives after the workbench compile is reliable.
+3. **Improved product icons** for installers.
+4. **Open VSX publish** for `veylora-core` when ready.
+5. **Installers** — signed or portable archives after the workbench compile is reliable.
 
-Non-goals: rewriting the editor from scratch; shipping MS branding/Marketplace.
+Non-goals: rewriting the editor from scratch; shipping MS branding/Marketplace; forcing any specific AI vendor.

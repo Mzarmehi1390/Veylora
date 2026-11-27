@@ -40,7 +40,7 @@ We do not reimplement the editor engine. Differentiation comes from product defa
 
 - [x] Project templates / quick-start scaffolds (Python, Node, static web; never overwrite existing files)
 - [x] Built-in task recipes and run configuration helpers (per scaffold; existing tasks are kept)
-- [ ] Optional local AI assistant integration points (provider-agnostic, user-controlled)
+- [x] Optional local AI assistant integration points (provider-agnostic, user-controlled, off by default)
 - [x] Performance-oriented default settings profile
 - [x] Multi-root workspace helpers
 - [ ] Improved icons and product resources for installers
@@ -65,6 +65,7 @@ We do not reimplement the editor engine. Differentiation comes from product defa
 - Replacing Monaco / the workbench with a custom editor from scratch
 - Shipping Microsoft Visual Studio Code branding or Marketplace
 - Tracking floating upstream `main` without review
+- Hard-coding any proprietary AI vendor or requiring an account for core functionality
 
 ## Success metrics
 

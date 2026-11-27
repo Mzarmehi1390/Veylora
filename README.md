@@ -26,7 +26,7 @@ Work branch for the latest product-layer work (if not yet merged): `develop/mode
 | Editor engine | Code - OSS (MIT) — proven, accessible, extensible |
 | Marketplace | Open VSX (not Microsoft Marketplace) |
 | Product layer | Veylora branding, theme, dashboard, workspace tools |
-| Privacy | No forced proprietary chat agent in product defaults |
+| Privacy | No forced proprietary chat agent in product defaults; optional AI is user-configured and off by default |
 | Builds | GitHub Actions for integration + VSIX packaging |
 
 ## What Veylora inherits from Code - OSS
@@ -42,7 +42,8 @@ The upstream workbench provides the mature foundation for editing, tabs, command
 - Project templates for Python, Node, and static web (existing files are never overwritten)
 - Workspace health check and richer runtime diagnostics
 - Keybindings (`Ctrl/Cmd+Shift+V` dashboard)
-- Veylora Dark theme and Python snippets
+- Veylora Dark and Light themes, Python snippets
+- Optional AI assistant integration points (provider-agnostic: Ollama, OpenAI-compatible, or custom endpoint; disabled by default)
 - Pinned upstream source for reproducible builds
 - Automated tests, TypeScript strict checks, VSIX packaging via GitHub Actions
 
