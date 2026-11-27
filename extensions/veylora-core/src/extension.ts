@@ -12,6 +12,7 @@ import {
 import { applyModernProfile, applyModernProfileToAll } from './profile';
 import { aiSettingsFilter, readAiStatus } from './ai';
 import { primaryFolderLabel, selectWorkspaceFolder, workspaceFolderCount } from './workspace';
+import { ensureTasksJson } from './tasks';
 
 const OUTPUT_CHANNEL = 'Veylora';
 const WORKSPACE_CONFIG_REL = '.veylora/workspace.json';
@@ -63,7 +64,8 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand('veylora.applyProfileToAll', () => applyModernProfileToAll(output)),
     vscode.commands.registerCommand('veylora.configureAI', () =>
       vscode.commands.executeCommand('workbench.action.openSettings', aiSettingsFilter())
-    )
+    ),
+    vscode.commands.registerCommand('veylora.ensureTasks', () => ensureTasksJson(output))
   );
 
   void maybeShowInitHint(context);
@@ -148,6 +150,9 @@ function openDashboard(context: vscode.ExtensionContext): void {
       case 'configureAI':
         await vscode.commands.executeCommand('veylora.configureAI');
         break;
+      case 'ensureTasks':
+        await vscode.commands.executeCommand('veylora.ensureTasks');
+        break;
       case 'refresh':
         await updateDashboardHtml(dashboardPanel!.webview);
         break;
@@ -202,6 +207,7 @@ async function updateDashboardHtml(webview: vscode.Webview): Promise<void> {
       <button data-cmd="health">Health Check</button>
       <button class="secondary" data-cmd="newProject">New Project</button>
       <button class="secondary" data-cmd="applyProfile">Apply Modern Profile</button>
+      <button class="secondary" data-cmd="ensureTasks">Ensure Tasks</button>
     </div>
   </div>
 
@@ -269,6 +275,9 @@ class VeyloraSidebarProvider implements vscode.WebviewViewProvider {
           break;
         case 'configureAI':
           await vscode.commands.executeCommand('veylora.configureAI');
+          break;
+        case 'ensureTasks':
+          await vscode.commands.executeCommand('veylora.ensureTasks');
           break;
         case 'refresh':
           await updateDashboardHtml(webviewView.webview);
@@ -381,6 +390,13 @@ async function newProjectFromTemplate(): Promise<void> {
     );
   }
 
+  // Ensure tasks if applicable
+  try {
+    await ensureTasksJson(output, picked.id);
+  } catch {
+    // non-fatal
+  }
+
   const openPath = scaffoldOpenPath(picked.id);
   const openUri = vscode.Uri.joinPath(folder.uri, openPath);
   try {
@@ -409,11 +425,15 @@ async function workspaceHealth(): Promise<void> {
   const lines: string[] = [`Veylora Workspace Health — ${folder.name}`, `Path: ${folder.uri.fsPath}`, ''];
 
   const configUri = vscode.Uri.joinPath(folder.uri, WORKSPACE_CONFIG_REL);
+  let scaffoldId: string | undefined;
   try {
     const raw = await vscode.workspace.fs.readFile(configUri);
     const parsed = JSON.parse(new TextDecoder().decode(raw));
     lines.push(`✓ .veylora/workspace.json present (schema ${parsed.schemaVersion ?? '?'})`);
-    if (parsed.scaffold?.id) lines.push(`  scaffold: ${parsed.scaffold.id}`);
+    if (parsed.scaffold?.id) {
+      lines.push(`  scaffold: ${parsed.scaffold.id}`);
+      scaffoldId = parsed.scaffold.id;
+    }
   } catch {
     lines.push('✗ .veylora/workspace.json missing — run Initialize Workspace');
   }
@@ -426,10 +446,37 @@ async function workspaceHealth(): Promise<void> {
     lines.push('○ .vscode/settings.json not found (modern profile not applied yet)');
   }
 
+  const tasksUri = vscode.Uri.joinPath(folder.uri, '.vscode/tasks.json');
+  try {
+    const raw = await vscode.workspace.fs.readFile(tasksUri);
+    const parsed = JSON.parse(new TextDecoder().decode(raw));
+    const count = Array.isArray(parsed.tasks) ? parsed.tasks.length : 0;
+    lines.push(`✓ .vscode/tasks.json present (${count} task(s))`);
+  } catch {
+    lines.push('○ .vscode/tasks.json not found — run Ensure Tasks');
+  }
+
+  const gitUri = vscode.Uri.joinPath(folder.uri, '.git');
+  try {
+    await vscode.workspace.fs.stat(gitUri);
+    lines.push('✓ Git repository detected');
+  } catch {
+    lines.push('○ No .git directory (optional)');
+  }
+
+  const ignoreUri = vscode.Uri.joinPath(folder.uri, '.gitignore');
+  try {
+    await vscode.workspace.fs.stat(ignoreUri);
+    lines.push('✓ .gitignore present');
+  } catch {
+    lines.push('○ .gitignore missing (recommended)');
+  }
+
   const ai = readAiStatus();
   lines.push('', `AI: ${ai.summary}`);
   lines.push(`Trusted: ${vscode.workspace.isTrusted ? 'yes' : 'no'}`);
   lines.push(`Folders in workspace: ${workspaceFolderCount()}`);
+  if (scaffoldId) lines.push(`Detected scaffold: ${scaffoldId}`);
 
   output.clear();
   for (const line of lines) output.appendLine(line);
@@ -463,8 +510,8 @@ function getNonce(): string {
 
 function escapeHtml(value: string): string {
   return value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
+    .replace(/&/g, '&')
+    .replace(/</g, '<')
+    .replace(/>/g, '>')
+    .replace(/"/g, '"');
 }
