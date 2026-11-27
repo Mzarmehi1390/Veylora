@@ -2,7 +2,7 @@
   "name": "veylora-core",
   "displayName": "Veylora Core",
   "description": "First-party workspace, onboarding, diagnostics and modern defaults for Veylora IDE.",
-  "version": "0.4.5",
+  "version": "0.4.6",
   "publisher": "veylora",
   "license": "MIT",
   "engines": {
@@ -74,6 +74,11 @@
         "command": "veylora.configureAI",
         "title": "Veylora: Configure AI Assistant",
         "category": "Veylora"
+      },
+      {
+        "command": "veylora.ensureTasks",
+        "title": "Veylora: Ensure Recommended Tasks",
+        "category": "Veylora"
       }
     ],
     "keybindings": [
@@ -96,6 +101,11 @@
         "command": "veylora.workspaceHealth",
         "key": "ctrl+shift+alt+h",
         "mac": "cmd+shift+alt+h"
+      },
+      {
+        "command": "veylora.ensureTasks",
+        "key": "ctrl+shift+alt+t",
+        "mac": "cmd+shift+alt+t"
       }
     ],
     "viewsContainers": {
