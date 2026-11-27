@@ -2,7 +2,7 @@
   "name": "veylora-core",
   "displayName": "Veylora Core",
   "description": "First-party workspace, onboarding, diagnostics and modern defaults for Veylora IDE.",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "publisher": "veylora",
   "license": "MIT",
   "engines": {
@@ -63,6 +63,11 @@
       {
         "command": "veylora.applyModernProfile",
         "title": "Veylora: Apply Modern Settings Profile",
+        "category": "Veylora"
+      },
+      {
+        "command": "veylora.applyProfileToAll",
+        "title": "Veylora: Apply Modern Profile to All Folders",
         "category": "Veylora"
       }
     ],
