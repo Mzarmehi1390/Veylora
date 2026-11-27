@@ -42,7 +42,7 @@ We do not reimplement the editor engine. Differentiation comes from product defa
 - [x] Built-in task recipes and run configuration helpers (per scaffold; existing tasks are kept)
 - [ ] Optional local AI assistant integration points (provider-agnostic, user-controlled)
 - [x] Performance-oriented default settings profile
-- [ ] Multi-root workspace helpers
+- [x] Multi-root workspace helpers
 - [ ] Improved icons and product resources for installers
 
 ## Phase 3 — Release quality
