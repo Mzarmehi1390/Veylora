@@ -14,7 +14,7 @@ This document is the single entry point for another AI or developer taking over.
 | --- | --- | --- |
 | **Runtime** | Real desktop IDE | `vendor/code-oss` (Git submodule → `microsoft/vscode`) |
 | **Product identity** | Name, Open VSX, no MS Marketplace | `scripts/apply-branding.mjs` → patches `product.json` |
-| **First-party features** | Dashboard, workspace, theme, diagnostics, scaffolds, profile | `extensions/veylora-core/` |
+| **First-party features** | Dashboard, workspace, theme, diagnostics, scaffolds, profile, multi-root helpers | `extensions/veylora-core/` |
 | **Dev orchestration** | Bootstrap / watch / launch | `scripts/*.mjs` |
 | **Legacy prototype** | Old PyQt6 editor — **reference only** | `veylora/`, `legacy/` |
 | **Compat entry** | `python main.py` → same Code-OSS launcher | `main.py` |
@@ -28,7 +28,7 @@ This document is the single entry point for another AI or developer taking over.
 | Ref | Meaning |
 | --- | --- |
 | `main` | Last merged foundation (Code-OSS adoption, Core ~0.2, basic CI) |
-| `develop/modern-foundation` | **Preferred work branch** — Core 0.4, scaffolds, modern profile, light theme, walkthrough, release workflow |
+| `develop/modern-foundation` | **Preferred work branch** — Core 0.4.1, scaffolds, modern profile, light theme, walkthrough, multi-root helpers, release workflow |
 
 If `develop/modern-foundation` is not yet merged, continue from that branch (or merge it to `main` first).
 
@@ -101,6 +101,7 @@ extensions/veylora-core/package.json  Extension manifest (commands, views, theme
 extensions/veylora-core/src/extension.ts   Activation, dashboard, workspace init, health
 extensions/veylora-core/src/scaffolds.ts   Python / Node / web starters (no overwrite)
 extensions/veylora-core/src/profile.ts     Folder-scoped modern settings profile
+extensions/veylora-core/src/workspace.ts   Multi-root folder selection helpers
 extensions/veylora-core/themes/       Veylora Dark and Veylora Light
 scripts/apply-branding.mjs            product.json overlay + Open VSX
 scripts/bootstrap.mjs                 submodule + pnpm + extension npm install
@@ -123,6 +124,7 @@ tests/*.test.mjs                      Integration contracts (keep green)
 - [x] Core 0.4: project scaffolds for Python, Node, and static web (skip existing files, stamp `.veylora/workspace.json`)
 - [x] Modern settings profile (telemetry off, quieter watcher/search, folder-scoped)
 - [x] Veylora Light theme + getting-started walkthrough
+- [x] Multi-root workspace helpers (folder picker, apply profile to all, health/dashboard awareness)
 - [x] Integration CI
 - [x] Build workflow that packages VSIX
 - [x] Release workflow: tag `v*` publishes the VSIX plus `SHA256SUMS` on a GitHub Release
@@ -135,7 +137,7 @@ tests/*.test.mjs                      Integration contracts (keep green)
 1. **Merge** `develop/modern-foundation` → `main` if still open; confirm CI + Build green.
 2. **Full Linux workbench compile** — harden `compile-workbench-linux` job against the pinned gulp/pnpm scripts.
 3. **Optional AI hooks** — provider-agnostic, user-configured; no vendor lock-in in core product.json.
-4. **Multi-root workspace helpers** and improved product icons for installers.
+4. **Improved product icons** for installers.
 5. **Open VSX publish** for `veylora-core` when ready.
 6. **Installers** — signed or portable archives after the workbench compile is reliable.
 
