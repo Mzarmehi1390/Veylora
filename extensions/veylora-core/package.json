@@ -1,8 +1,8 @@
 {
   "name": "veylora-core",
   "displayName": "Veylora Core",
-  "description": "First-party workspace, onboarding, diagnostics and modern defaults for Veylora IDE.",
-  "version": "0.4.1",
+  "description": "First-party workspace, onboarding, diagnostics, modern defaults and optional local AI for Veylora IDE.",
+  "version": "0.4.2",
   "publisher": "veylora",
   "license": "MIT",
   "engines": {
@@ -17,7 +17,8 @@
     "veylora",
     "ide",
     "dashboard",
-    "workspace"
+    "workspace",
+    "ai"
   ],
   "activationEvents": [
     "onStartupFinished"
@@ -69,6 +70,11 @@
         "command": "veylora.applyProfileToAll",
         "title": "Veylora: Apply Modern Profile to All Folders",
         "category": "Veylora"
+      },
+      {
+        "command": "veylora.openLocalAI",
+        "title": "Veylora: Open Local AI Assistant",
+        "category": "Veylora"
       }
     ],
     "keybindings": [
@@ -118,6 +124,21 @@
           "type": "boolean",
           "default": true,
           "description": "Prefer modern editor defaults when initializing a new Veylora workspace configuration."
+        },
+        "veylora.ai.enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable the optional local AI assistant. Off by default; nothing is sent anywhere until you configure an endpoint."
+        },
+        "veylora.ai.endpoint": {
+          "type": "string",
+          "default": "",
+          "description": "OpenAI-compatible base URL for a local model server (example: http://127.0.0.1:11434/v1 for Ollama). Leave empty to disable chat."
+        },
+        "veylora.ai.model": {
+          "type": "string",
+          "default": "llama3.2",
+          "description": "Model name to request from the local endpoint."
         }
       }
     },
