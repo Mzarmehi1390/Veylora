@@ -12,6 +12,7 @@ import {
 import { applyModernProfile, applyModernProfileToAll } from './profile';
 import { aiSettingsFilter, readAiStatus } from './ai';
 import { primaryFolderLabel, selectWorkspaceFolder, workspaceFolderCount } from './workspace';
+import { defaultTasksForScaffold, tasksDocument } from './tasks';
 
 const OUTPUT_CHANNEL = 'Veylora';
 const WORKSPACE_CONFIG_REL = '.veylora/workspace.json';
@@ -63,7 +64,8 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand('veylora.applyProfileToAll', () => applyModernProfileToAll(output)),
     vscode.commands.registerCommand('veylora.configureAI', () =>
       vscode.commands.executeCommand('workbench.action.openSettings', aiSettingsFilter())
-    )
+    ),
+    vscode.commands.registerCommand('veylora.ensureTasks', () => ensureTasks())
   );
 
   void maybeShowInitHint(context);
@@ -148,6 +150,9 @@ function openDashboard(context: vscode.ExtensionContext): void {
       case 'configureAI':
         await vscode.commands.executeCommand('veylora.configureAI');
         break;
+      case 'ensureTasks':
+        await vscode.commands.executeCommand('veylora.ensureTasks');
+        break;
       case 'refresh':
         await updateDashboardHtml(dashboardPanel!.webview);
         break;
@@ -202,6 +207,7 @@ async function updateDashboardHtml(webview: vscode.Webview): Promise<void> {
       <button data-cmd="health">Health Check</button>
       <button class="secondary" data-cmd="newProject">New Project</button>
       <button class="secondary" data-cmd="applyProfile">Apply Modern Profile</button>
+      <button class="secondary" data-cmd="ensureTasks">Ensure Tasks</button>
     </div>
   </div>
 
@@ -269,6 +275,9 @@ class VeyloraSidebarProvider implements vscode.WebviewViewProvider {
           break;
         case 'configureAI':
           await vscode.commands.executeCommand('veylora.configureAI');
+          break;
+        case 'ensureTasks':
+          await vscode.commands.executeCommand('veylora.ensureTasks');
           break;
         case 'refresh':
           await updateDashboardHtml(webviewView.webview);
@@ -408,12 +417,16 @@ async function workspaceHealth(): Promise<void> {
 
   const lines: string[] = [`Veylora Workspace Health — ${folder.name}`, `Path: ${folder.uri.fsPath}`, ''];
 
+  let scaffoldId: string | undefined;
   const configUri = vscode.Uri.joinPath(folder.uri, WORKSPACE_CONFIG_REL);
   try {
     const raw = await vscode.workspace.fs.readFile(configUri);
     const parsed = JSON.parse(new TextDecoder().decode(raw));
     lines.push(`✓ .veylora/workspace.json present (schema ${parsed.schemaVersion ?? '?'})`);
-    if (parsed.scaffold?.id) lines.push(`  scaffold: ${parsed.scaffold.id}`);
+    if (parsed.scaffold?.id) {
+      scaffoldId = String(parsed.scaffold.id);
+      lines.push(`  scaffold: ${scaffoldId}`);
+    }
   } catch {
     lines.push('✗ .veylora/workspace.json missing — run Initialize Workspace');
   }
@@ -426,15 +439,78 @@ async function workspaceHealth(): Promise<void> {
     lines.push('○ .vscode/settings.json not found (modern profile not applied yet)');
   }
 
+  const tasksUri = vscode.Uri.joinPath(folder.uri, '.vscode/tasks.json');
+  try {
+    await vscode.workspace.fs.stat(tasksUri);
+    lines.push('✓ .vscode/tasks.json present');
+  } catch {
+    lines.push('○ .vscode/tasks.json not found — run Ensure Tasks to add a starter');
+  }
+
   const ai = readAiStatus();
   lines.push('', `AI: ${ai.summary}`);
   lines.push(`Trusted: ${vscode.workspace.isTrusted ? 'yes' : 'no'}`);
   lines.push(`Folders in workspace: ${workspaceFolderCount()}`);
+  if (scaffoldId) lines.push(`Detected scaffold: ${scaffoldId}`);
 
   output.clear();
   for (const line of lines) output.appendLine(line);
   output.show(true);
   void vscode.window.showInformationMessage('Veylora health check written to the Veylora output channel.');
+}
+
+async function ensureTasks(): Promise<void> {
+  const folder = await selectWorkspaceFolder('Add or update tasks for which folder?');
+  if (!folder) {
+    void vscode.window.showWarningMessage('Open a project folder first.');
+    return;
+  }
+
+  let scaffoldId: string | undefined;
+  const configUri = vscode.Uri.joinPath(folder.uri, WORKSPACE_CONFIG_REL);
+  try {
+    const raw = await vscode.workspace.fs.readFile(configUri);
+    const parsed = JSON.parse(new TextDecoder().decode(raw));
+    if (parsed.scaffold?.id) scaffoldId = String(parsed.scaffold.id);
+  } catch {
+    // no config
+  }
+
+  const tasksUri = vscode.Uri.joinPath(folder.uri, '.vscode/tasks.json');
+  let exists = false;
+  try {
+    await vscode.workspace.fs.stat(tasksUri);
+    exists = true;
+  } catch {
+    // missing
+  }
+
+  if (exists) {
+    const action = await vscode.window.showWarningMessage(
+      'tasks.json already exists. Replace it with a Veylora starter for this scaffold?',
+      { modal: true },
+      'Replace'
+    );
+    if (action !== 'Replace') return;
+  }
+
+  const tasks = defaultTasksForScaffold(scaffoldId);
+  const content = tasksDocument(tasks);
+  const encoder = new TextEncoder();
+  const dir = vscode.Uri.joinPath(tasksUri, '..');
+  try {
+    await vscode.workspace.fs.createDirectory(dir);
+  } catch {
+    // exists
+  }
+  await vscode.workspace.fs.writeFile(tasksUri, encoder.encode(content));
+  output.appendLine(`Wrote tasks.json for ${folder.name} (scaffold: ${scaffoldId ?? 'generic'})`);
+  void vscode.window.showInformationMessage(
+    exists
+      ? 'Replaced tasks.json with a Veylora starter.'
+      : 'Created tasks.json with a Veylora starter task.'
+  );
+  if (dashboardPanel) void updateDashboardHtml(dashboardPanel.webview);
 }
 
 function showDiagnostics(): void {
