@@ -15,27 +15,48 @@ export const MODERN_PROFILE: Record<string, unknown> = {
   'editor.linkedEditing': true,
   'editor.renderWhitespace': 'selection',
   'editor.largeFileOptimizations': true,
+  'editor.suggest.showStatusBar': true,
+  'editor.inlineSuggest.enabled': true,
   'workbench.list.smoothScrolling': true,
   'workbench.startupEditor': 'none',
+  'workbench.editor.enablePreview': false,
+  'workbench.editor.limit.enabled': true,
+  'workbench.editor.limit.value': 8,
   'files.trimTrailingWhitespace': true,
   'files.insertFinalNewline': true,
+  'files.autoSave': 'afterDelay',
+  'files.autoSaveDelay': 1000,
   'files.watcherExclude': {
     '**/.git/objects/**': true,
     '**/.git/subtree-cache/**': true,
     '**/node_modules/**': true,
     '**/.venv/**': true,
     '**/venv/**': true,
-    '**/dist/**': true
+    '**/dist/**': true,
+    '**/build/**': true,
+    '**/.next/**': true,
+    '**/__pycache__/**': true,
+    '**/.pytest_cache/**': true
   },
   'search.exclude': {
     '**/node_modules': true,
     '**/.venv': true,
     '**/venv': true,
-    '**/dist': true
+    '**/dist': true,
+    '**/build': true,
+    '**/.next': true,
+    '**/__pycache__': true
   },
   'explorer.compactFolders': false,
   'telemetry.telemetryLevel': 'off',
-  'git.autofetch': true
+  'telemetry.feedback.enabled': false,
+  'update.mode': 'manual',
+  'extensions.autoUpdate': false,
+  'git.autofetch': true,
+  'git.confirmSync': false,
+  'terminal.integrated.defaultProfile.linux': 'bash',
+  'terminal.integrated.defaultProfile.osx': 'zsh',
+  'security.workspace.trust.enabled': true
 };
 
 export function profileEntries(): Array<[string, unknown]> {
