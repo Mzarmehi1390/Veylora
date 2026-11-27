@@ -20,6 +20,7 @@ Veylora/
 │       ├── src/extension.ts
 │       ├── src/scaffolds.ts  # Python, Node, and static web starters
 │       ├── src/profile.ts    # Folder-scoped modern settings profile
+│       ├── src/workspace.ts  # Multi-root folder selection helpers
 │       ├── themes/           # Veylora Dark + Veylora Light
 │       ├── snippets/
 │       ├── resources/
@@ -37,7 +38,7 @@ Veylora/
 ├── veylora/                # LEGACY PyQt package — not the shipped runtime
 ├── legacy/                 # LEGACY prototype scripts
 ├── main.py                 # Compat entry → Code-OSS launcher
-├── package.json            # Root orchestration (v0.4.0 on develop branch)
+├── package.json            # Root orchestration (v0.4.1 on develop branch)
 ├── pyproject.toml
 ├── requirements.txt
 ├── README.md
