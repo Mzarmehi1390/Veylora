@@ -13,6 +13,8 @@ Veylora/
 │   ├── ARCHITECTURE.md     # Product/runtime layers
 │   ├── ROADMAP.md          # Phased plan
 │   ├── STRUCTURE.md        # This file
+│   ├── CONTRIBUTING.md     # Contribution guide
+│   ├── RECOMMENDED.md      # Suggested Open VSX extensions
 │   ├── UPSTREAM.md         # Submodule workflow
 │   └── LICENSING.md
 ├── extensions/
@@ -22,6 +24,7 @@ Veylora/
 │       ├── src/profile.ts    # Folder-scoped modern settings profile
 │       ├── src/workspace.ts  # Multi-root folder selection helpers
 │       ├── src/ai.ts         # Provider-agnostic AI configuration status
+│       ├── src/tasks.ts      # Task signal detection (package.json, pyproject, etc.)
 │       ├── themes/           # Veylora Dark + Veylora Light
 │       ├── snippets/
 │       ├── resources/        # Improved product icon (veylora.svg)
@@ -39,7 +42,7 @@ Veylora/
 ├── veylora/                # LEGACY PyQt package — not the shipped runtime
 ├── legacy/                 # LEGACY prototype scripts
 ├── main.py                 # Compat entry → Code-OSS launcher
-├── package.json            # Root orchestration (v0.4.4 on develop branch)
+├── package.json            # Root orchestration (v0.4.6)
 ├── pyproject.toml
 ├── requirements.txt
 ├── README.md
