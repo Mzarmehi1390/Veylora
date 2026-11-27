@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { openLocalAIAssistant } from './ai';
 import { applyModernProfile, applyModernProfileToAll } from './profile';
 import {
   applyScaffoldMarker,
@@ -21,7 +22,8 @@ type DashboardCommand =
   | 'welcome'
   | 'newProject'
   | 'applyModernProfile'
-  | 'applyProfileToAll';
+  | 'applyProfileToAll'
+  | 'openLocalAI';
 
 const WALKTHROUGH_ID = 'veylora.veylora-core#veylora.gettingStarted';
 
@@ -39,7 +41,8 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand('veylora.workspaceHealth', () => runWorkspaceHealth(output)),
     vscode.commands.registerCommand('veylora.newProject', () => createProjectFromTemplate(output)),
     vscode.commands.registerCommand('veylora.applyModernProfile', () => applyModernProfile(output)),
-    vscode.commands.registerCommand('veylora.applyProfileToAll', () => applyModernProfileToAll(output))
+    vscode.commands.registerCommand('veylora.applyProfileToAll', () => applyModernProfileToAll(output)),
+    vscode.commands.registerCommand('veylora.openLocalAI', () => openLocalAIAssistant(output))
   ];
 
   const view = vscode.window.registerWebviewViewProvider(
@@ -57,7 +60,7 @@ export function activate(context: vscode.ExtensionContext): void {
   }
 
   context.subscriptions.push(output, ...commands, view, statusBar);
-  output.appendLine('Veylora Core 0.4.1 activated.');
+  output.appendLine('Veylora Core 0.4.2 activated.');
 
   void maybeHintWorkspaceInit(context, output);
 }
@@ -76,7 +79,7 @@ class WorkspaceViewProvider implements vscode.WebviewViewProvider {
     view.webview.options = { enableScripts: true, localResourceRoots: [this.extensionUri] };
     view.webview.html = renderDashboard(view.webview, this.extensionUri);
     view.webview.onDidReceiveMessage((message: unknown) =>
-      handleDashboardMessage(message, this.output)
+      handleDashboardMessage(message, this.output, undefined)
     );
   }
 }
@@ -89,10 +92,14 @@ function openDashboardPanel(context: vscode.ExtensionContext, output: vscode.Out
     { enableScripts: true, localResourceRoots: [context.extensionUri] }
   );
   panel.webview.html = renderDashboard(panel.webview, context.extensionUri);
-  panel.webview.onDidReceiveMessage((message: unknown) => handleDashboardMessage(message, output));
+  panel.webview.onDidReceiveMessage((message: unknown) => handleDashboardMessage(message, output, context));
 }
 
-async function handleDashboardMessage(message: unknown, output: vscode.OutputChannel): Promise<void> {
+async function handleDashboardMessage(
+  message: unknown,
+  output: vscode.OutputChannel,
+  context: vscode.ExtensionContext | undefined
+): Promise<void> {
   if (!isDashboardMessage(message)) return;
   switch (message.command) {
     case 'createWorkspaceConfig':
@@ -117,6 +124,11 @@ async function handleDashboardMessage(message: unknown, output: vscode.OutputCha
       await applyModernProfileToAll(output);
       break;
     case 'welcome':
+      if (context) await openWelcome(context, output);
+      else await vscode.commands.executeCommand('veylora.welcome');
+      break;
+    case 'openLocalAI':
+      await openLocalAIAssistant(output);
       break;
   }
 }
@@ -132,7 +144,8 @@ function isDashboardMessage(value: unknown): value is { command: DashboardComman
     command === 'welcome' ||
     command === 'newProject' ||
     command === 'applyModernProfile' ||
-    command === 'applyProfileToAll'
+    command === 'applyProfileToAll' ||
+    command === 'openLocalAI'
   );
 }
 
@@ -478,16 +491,18 @@ function renderDashboard(webview: vscode.Webview, extensionUri: vscode.Uri): str
         : count + ' folders open'
   );
   const api = escapeHtml(vscode.version);
+  const coreVersion =
+    vscode.extensions.getExtension('veylora.veylora-core')?.packageJSON.version ?? '0.4.2';
 
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${webview.cspSource}; style-src ${webview.cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}';">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${webview.cspSource}; style-src 'nonce-${nonce}'; script-src 'nonce-${nonce}';">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Veylora</title>
-  <style>
-    :root { color-scheme: dark; }
+  <style nonce="${nonce}">
+    :root { color-scheme: light dark; }
     body {
       margin: 0;
       padding: 20px 16px 28px;
@@ -504,7 +519,7 @@ function renderDashboard(webview: vscode.Webview, extensionUri: vscode.Uri): str
       padding: 14px 14px 12px;
       border: 1px solid var(--vscode-panel-border);
       border-radius: 10px;
-      background: color-mix(in srgb, var(--vscode-sideBar-background) 92%, #7167df 8%);
+      background: color-mix(in srgb, var(--vscode-sideBar-background) 94%, var(--vscode-textLink-foreground) 6%);
     }
     .card h2 { margin: 0 0 8px; font-size: 13px; font-weight: 600; }
     .path { overflow-wrap: anywhere; font-size: 11px; color: var(--vscode-descriptionForeground); margin: 0 0 4px; }
@@ -533,8 +548,8 @@ function renderDashboard(webview: vscode.Webview, extensionUri: vscode.Uri): str
       padding: 2px 8px;
       border-radius: 999px;
       font-size: 10px;
-      background: #7167df33;
-      color: #c5bfff;
+      background: color-mix(in srgb, var(--vscode-textLink-foreground) 18%, transparent);
+      color: var(--vscode-textLink-foreground);
       margin-bottom: 8px;
     }
   </style>
@@ -544,7 +559,7 @@ function renderDashboard(webview: vscode.Webview, extensionUri: vscode.Uri): str
     <img src="${icon}" alt="Veylora">
     <div>
       <h1>Veylora IDE</h1>
-      <div class="muted">Code Beyond Limits.</div>
+      <div class="muted">Code Beyond Limits. · Core ${escapeHtml(coreVersion)}</div>
     </div>
   </header>
 
@@ -559,12 +574,14 @@ function renderDashboard(webview: vscode.Webview, extensionUri: vscode.Uri): str
       <button class="secondary" data-command="applyModernProfile">Apply Modern Settings Profile</button>
       <button class="secondary" data-command="applyProfileToAll">Apply Profile to All Folders</button>
       <button class="secondary" data-command="workspaceHealth">Run Health Check</button>
+      <button class="secondary" data-command="welcome">Getting Started Walkthrough</button>
     </section>
 
     <section class="card">
       <h2>Developer tools</h2>
       <button data-command="showDiagnostics">Runtime Diagnostics</button>
       <button class="secondary" data-command="openSettings">Veylora Settings</button>
+      <button class="secondary" data-command="openLocalAI">Local AI Assistant</button>
     </section>
   </div>
 
