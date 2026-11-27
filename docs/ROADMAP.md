@@ -43,7 +43,7 @@ We do not reimplement the editor engine. Differentiation comes from product defa
 - [x] Optional local AI assistant integration points (provider-agnostic, user-controlled, off by default)
 - [x] Performance-oriented default settings profile
 - [x] Multi-root workspace helpers
-- [ ] Improved icons and product resources for installers
+- [x] Improved icons and product resources for installers
 
 ## Phase 3 — Release quality
 

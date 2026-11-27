@@ -24,7 +24,7 @@ Veylora/
 │       ├── src/ai.ts         # Provider-agnostic AI configuration status
 │       ├── themes/           # Veylora Dark + Veylora Light
 │       ├── snippets/
-│       ├── resources/
+│       ├── resources/        # Improved product icon (veylora.svg)
 │       ├── package.json
 │       └── tsconfig.json
 ├── scripts/
@@ -39,7 +39,7 @@ Veylora/
 ├── veylora/                # LEGACY PyQt package — not the shipped runtime
 ├── legacy/                 # LEGACY prototype scripts
 ├── main.py                 # Compat entry → Code-OSS launcher
-├── package.json            # Root orchestration (v0.4.2 on develop branch)
+├── package.json            # Root orchestration (v0.4.3 on develop branch)
 ├── pyproject.toml
 ├── requirements.txt
 ├── README.md
