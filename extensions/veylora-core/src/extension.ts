@@ -12,6 +12,7 @@ import {
 import { applyModernProfile, applyModernProfileToAll } from './profile';
 import { aiSettingsFilter, readAiStatus } from './ai';
 import { primaryFolderLabel, selectWorkspaceFolder, workspaceFolderCount } from './workspace';
+import { detectTaskSignals, formatTaskSignals, showTaskSignals } from './tasks';
 
 const OUTPUT_CHANNEL = 'Veylora';
 const WORKSPACE_CONFIG_REL = '.veylora/workspace.json';
@@ -63,7 +64,8 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand('veylora.applyProfileToAll', () => applyModernProfileToAll(output)),
     vscode.commands.registerCommand('veylora.configureAI', () =>
       vscode.commands.executeCommand('workbench.action.openSettings', aiSettingsFilter())
-    )
+    ),
+    vscode.commands.registerCommand('veylora.detectTasks', () => showTaskSignals(output))
   );
 
   void maybeShowInitHint(context);
@@ -148,6 +150,9 @@ function openDashboard(context: vscode.ExtensionContext): void {
       case 'configureAI':
         await vscode.commands.executeCommand('veylora.configureAI');
         break;
+      case 'detectTasks':
+        await vscode.commands.executeCommand('veylora.detectTasks');
+        break;
       case 'refresh':
         await updateDashboardHtml(dashboardPanel!.webview);
         break;
@@ -200,6 +205,7 @@ async function updateDashboardHtml(webview: vscode.Webview): Promise<void> {
     <div class="muted">${folders} folder(s) · ${trusted ? 'Trusted' : 'Restricted'}</div>
     <div class="row">
       <button data-cmd="health">Health Check</button>
+      <button class="secondary" data-cmd="detectTasks">Task Signals</button>
       <button class="secondary" data-cmd="newProject">New Project</button>
       <button class="secondary" data-cmd="applyProfile">Apply Modern Profile</button>
     </div>
@@ -269,6 +275,9 @@ class VeyloraSidebarProvider implements vscode.WebviewViewProvider {
           break;
         case 'configureAI':
           await vscode.commands.executeCommand('veylora.configureAI');
+          break;
+        case 'detectTasks':
+          await vscode.commands.executeCommand('veylora.detectTasks');
           break;
         case 'refresh':
           await updateDashboardHtml(webviewView.webview);
@@ -426,6 +435,9 @@ async function workspaceHealth(): Promise<void> {
     lines.push('○ .vscode/settings.json not found (modern profile not applied yet)');
   }
 
+  const signals = await detectTaskSignals(folder);
+  lines.push('', ...formatTaskSignals(signals));
+
   const ai = readAiStatus();
   lines.push('', `AI: ${ai.summary}`);
   lines.push(`Trusted: ${vscode.workspace.isTrusted ? 'yes' : 'no'}`);
@@ -463,8 +475,8 @@ function getNonce(): string {
 
 function escapeHtml(value: string): string {
   return value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
+    .replace(/&/g, '&')
+    .replace(/</g, '<')
+    .replace(/>/g, '>')
+    .replace(/"/g, '"');
 }
