@@ -25,12 +25,12 @@ Phased plan for the product layer on Code - OSS. The editor engine is not rewrit
 - [x] Release workflow: tag `v*` publishes VSIX + SHA256SUMS
 - [ ] Confirm CI + Build green on `develop/modern-foundation` and merge to `main`
 
-## Phase 2 — Differentiation & reliability (next)
+## Phase 2 — Differentiation & reliability (in progress)
 
 - [ ] Harden `compile-workbench-linux` job against the pinned gulp/pnpm scripts (manual/tag only)
-- [ ] Recommended extensions curation + contribution guide polish
-- [ ] Tasks helpers and richer workspace health signals
-- [ ] Settings profile refinements (more privacy/performance defaults)
+- [x] Recommended extensions curation + contribution guide polish (see docs/CONTRIBUTING.md)
+- [x] Tasks helpers and richer workspace health signals (Core 0.4.6: Ensure Tasks command, health checks for tasks/git/gitignore)
+- [x] Settings profile refinements (more privacy/performance defaults: autoSave, excludes, update mode, etc.)
 - [ ] Open VSX publish for `veylora-core` when ready
 - [ ] Installers — signed or portable archives after workbench compile is reliable
 
