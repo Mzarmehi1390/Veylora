@@ -15,10 +15,15 @@ export const MODERN_PROFILE: Record<string, unknown> = {
   'editor.linkedEditing': true,
   'editor.renderWhitespace': 'selection',
   'editor.largeFileOptimizations': true,
+  'editor.suggest.preview': true,
+  'editor.inlineSuggest.enabled': true,
   'workbench.list.smoothScrolling': true,
   'workbench.startupEditor': 'none',
+  'workbench.editor.enablePreview': false,
   'files.trimTrailingWhitespace': true,
   'files.insertFinalNewline': true,
+  'files.autoSave': 'afterDelay',
+  'files.autoSaveDelay': 1000,
   'files.watcherExclude': {
     '**/.git/objects/**': true,
     '**/.git/subtree-cache/**': true,
@@ -35,7 +40,8 @@ export const MODERN_PROFILE: Record<string, unknown> = {
   },
   'explorer.compactFolders': false,
   'telemetry.telemetryLevel': 'off',
-  'git.autofetch': true
+  'git.autofetch': true,
+  'update.mode': 'manual'
 };
 
 export function profileEntries(): Array<[string, unknown]> {
