@@ -2,7 +2,7 @@
   "name": "veylora-core",
   "displayName": "Veylora Core",
   "description": "First-party workspace, onboarding, diagnostics and modern defaults for Veylora IDE.",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "publisher": "veylora",
   "license": "MIT",
   "engines": {

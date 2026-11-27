@@ -50,6 +50,7 @@ jobs:
           retention-days: 30
 
   # Full Code - OSS compile is expensive. Trigger manually or from release tags.
+  # Hardened with explicit existence checks and clearer fallback for the pinned upstream scripts.
   compile-workbench-linux:
     name: Compile Code-OSS (Linux)
     runs-on: ubuntu-latest
@@ -77,14 +78,22 @@ jobs:
       - name: Compile Veylora Core
         run: npm run typecheck
 
+      - name: Verify upstream checkout
+        working-directory: vendor/code-oss
+        run: |
+          test -f package.json || (echo "Missing vendor/code-oss/package.json — submodule not initialized" && exit 1)
+          test -d node_modules || echo "Note: node_modules may be populated by bootstrap"
+
       - name: Compile Code - OSS (gulp compile)
         working-directory: vendor/code-oss
         run: |
           corepack enable
           # Prefer the project's documented compile entry; fall back gracefully.
           if corepack pnpm run compile --help >/dev/null 2>&1; then
+            echo "Using pnpm run compile"
             corepack pnpm run compile
           else
+            echo "Falling back to gulp compile"
             corepack pnpm exec gulp compile
           fi
 
