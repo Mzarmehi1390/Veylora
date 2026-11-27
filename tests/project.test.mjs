@@ -10,7 +10,7 @@ const manifest = JSON.parse(
 );
 const rootManifest = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'));
 
-test('Veylora Core declares dashboard, health, welcome, scaffold and profile commands', () => {
+test('Veylora Core declares dashboard, health, welcome, scaffold, profile and AI commands', () => {
   const commands = manifest.contributes.commands.map((item) => item.command);
   assert.ok(commands.includes('veylora.openDashboard'));
   assert.ok(commands.includes('veylora.createWorkspaceConfig'));
@@ -19,8 +19,9 @@ test('Veylora Core declares dashboard, health, welcome, scaffold and profile com
   assert.ok(commands.includes('veylora.newProject'));
   assert.ok(commands.includes('veylora.applyModernProfile'));
   assert.ok(commands.includes('veylora.applyProfileToAll'));
+  assert.ok(commands.includes('veylora.configureAI'));
   assert.equal(manifest.main, './dist/extension.js');
-  assert.equal(manifest.version, '0.4.1');
+  assert.equal(manifest.version, '0.4.2');
 });
 
 test('Veylora contributes activity bar view, themes, keybindings and walkthrough', () => {
@@ -34,10 +35,14 @@ test('Veylora contributes activity bar view, themes, keybindings and walkthrough
   assert.ok(manifest.contributes.walkthroughs.some((item) => item.id === 'veylora.gettingStarted'));
 });
 
-test('modern defaults configuration is declared', () => {
+test('modern defaults and optional AI configuration are declared', () => {
   const props = manifest.contributes.configuration.properties;
   assert.ok(props['veylora.modernDefaults.enabled']);
   assert.ok(props['veylora.workspace.autoInitHint']);
+  assert.ok(props['veylora.ai.enabled']);
+  assert.ok(props['veylora.ai.provider']);
+  assert.equal(props['veylora.ai.provider'].default, 'none');
+  assert.equal(props['veylora.ai.enabled'].default, false);
 });
 
 test('the upstream Code - OSS source is pinned as a submodule', async () => {
@@ -50,7 +55,7 @@ test('cross-platform development commands point to Node orchestration scripts', 
   assert.equal(rootManifest.scripts.bootstrap, 'node scripts/bootstrap.mjs');
   assert.equal(rootManifest.scripts['dev:watch'], 'node scripts/watch.mjs');
   assert.equal(rootManifest.scripts['dev:launch'], 'node scripts/launch.mjs');
-  assert.equal(rootManifest.version, '0.4.1');
+  assert.equal(rootManifest.version, '0.4.2');
 });
 
 test('all Veylora Node orchestration scripts parse successfully', () => {

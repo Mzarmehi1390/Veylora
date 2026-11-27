@@ -2,7 +2,7 @@
   "name": "veylora-core",
   "displayName": "Veylora Core",
   "description": "First-party workspace, onboarding, diagnostics and modern defaults for Veylora IDE.",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "publisher": "veylora",
   "license": "MIT",
   "engines": {
@@ -69,6 +69,11 @@
         "command": "veylora.applyProfileToAll",
         "title": "Veylora: Apply Modern Profile to All Folders",
         "category": "Veylora"
+      },
+      {
+        "command": "veylora.configureAI",
+        "title": "Veylora: Configure AI Assistant",
+        "category": "Veylora"
       }
     ],
     "keybindings": [
@@ -118,6 +123,33 @@
           "type": "boolean",
           "default": true,
           "description": "Prefer modern editor defaults when initializing a new Veylora workspace configuration."
+        },
+        "veylora.ai.enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable the optional local or user-configured AI assistant integration points. Off by default (privacy-first)."
+        },
+        "veylora.ai.provider": {
+          "type": "string",
+          "enum": ["none", "ollama", "openai-compatible", "custom"],
+          "enumDescriptions": [
+            "No AI provider",
+            "Local Ollama (http://localhost:11434)",
+            "Any OpenAI-compatible HTTP API",
+            "Custom endpoint you control"
+          ],
+          "default": "none",
+          "description": "Provider for optional AI features. No vendor is hard-coded; you supply the endpoint."
+        },
+        "veylora.ai.endpoint": {
+          "type": "string",
+          "default": "",
+          "description": "Base URL of the AI provider (e.g. http://127.0.0.1:11434 for Ollama, or your OpenAI-compatible server)."
+        },
+        "veylora.ai.model": {
+          "type": "string",
+          "default": "",
+          "description": "Model name or identifier to request from the provider."
         }
       }
     },
