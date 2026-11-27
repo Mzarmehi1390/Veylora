@@ -19,6 +19,8 @@ export const MODERN_PROFILE: Record<string, unknown> = {
   'workbench.startupEditor': 'none',
   'files.trimTrailingWhitespace': true,
   'files.insertFinalNewline': true,
+  'files.autoSave': 'afterDelay',
+  'files.autoSaveDelay': 1000,
   'files.watcherExclude': {
     '**/.git/objects/**': true,
     '**/.git/subtree-cache/**': true,
@@ -33,9 +35,13 @@ export const MODERN_PROFILE: Record<string, unknown> = {
     '**/venv': true,
     '**/dist': true
   },
+  'search.followSymlinks': false,
   'explorer.compactFolders': false,
   'telemetry.telemetryLevel': 'off',
-  'git.autofetch': true
+  'telemetry.feedback.enabled': false,
+  'update.mode': 'manual',
+  'git.autofetch': true,
+  'git.confirmSync': false
 };
 
 export function profileEntries(): Array<[string, unknown]> {
