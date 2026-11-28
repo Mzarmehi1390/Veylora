@@ -21,7 +21,7 @@ Phased plan for the product layer on Code - OSS. The editor engine is not rewrit
 - [x] Optional provider-agnostic AI configuration points (off by default)
 - [x] Improved product icon
 - [x] Dashboard panel reuse + live AI status + Getting Started button (Core 0.4.4)
-- [x] Additional keybindings
+- [x] Additional keybindings (including Configure Tasks)
 - [x] Release workflow: tag `v*` publishes VSIX + SHA256SUMS
 - [ ] Confirm CI + Build green on `develop/modern-foundation` and merge to `main`
 
@@ -29,8 +29,9 @@ Phased plan for the product layer on Code - OSS. The editor engine is not rewrit
 
 - [ ] Harden `compile-workbench-linux` job against the pinned gulp/pnpm scripts (manual/tag only)
 - [x] Recommended extensions curation + contribution guide polish (`docs/CONTRIBUTING.md`)
-- [x] Tasks helpers and richer workspace health signals (Core 0.4.6)
+- [x] Tasks helpers and richer workspace health signals (Core 0.4.6–0.4.7, now includes Rust/Go)
 - [x] Settings profile refinements (more privacy/performance defaults)
+- [x] Dashboard project-kind display + correct HTML escaping in webviews
 - [ ] Open VSX publish for `veylora-core` when ready
 - [ ] Installers — signed or portable archives after workbench compile is reliable
 
@@ -43,4 +44,4 @@ Phased plan for the product layer on Code - OSS. The editor engine is not rewrit
 
 ## Notes
 
-Preferred work branch: `develop/modern-foundation`. Full Code - OSS Electron rebuild stays on `workflow_dispatch` or release tags.
+Preferred work branch: `develop/modern-foundation`. Full Code - OSS Electron rebuild stays on `workflow_dispatch` or release tags. Current product version: 0.4.7.

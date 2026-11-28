@@ -14,7 +14,7 @@ This document is the single entry point for another AI or developer taking over.
 | --- | --- | --- |
 | **Runtime** | Real desktop IDE | `vendor/code-oss` (Git submodule → `microsoft/vscode`) |
 | **Product identity** | Name, Open VSX, no MS Marketplace | `scripts/apply-branding.mjs` → patches `product.json` |
-| **First-party features** | Dashboard, workspace, theme, diagnostics, scaffolds, profile, tasks helpers, multi-root helpers, optional AI points | `extensions/veylora-core/` |
+| **First-party features** | Dashboard, workspace, theme, diagnostics, scaffolds, profile, tasks helpers (Node/Python/web/Rust/Go), multi-root helpers, optional AI points | `extensions/veylora-core/` |
 | **Dev orchestration** | Bootstrap / watch / launch | `scripts/*.mjs` |
 | **Legacy prototype** | Old PyQt6 editor — **reference only** | `veylora/`, `legacy/` |
 | **Compat entry** | `python main.py` → same Code-OSS launcher | `main.py` |
@@ -28,7 +28,7 @@ This document is the single entry point for another AI or developer taking over.
 | Ref | Meaning |
 | --- | --- |
 | `main` | Last merged foundation (Code-OSS adoption, Core ~0.2, basic CI) |
-| `develop/modern-foundation` | **Preferred work branch** — Core 0.4.6, scaffolds, modern profile (refined), light theme, walkthrough, multi-root helpers, optional AI integration points, tasks helpers + richer health, improved product icon, restored dashboard/commands entrypoint, release workflow, contribution guide |
+| `develop/modern-foundation` | **Preferred work branch** — Core 0.4.7, scaffolds, modern profile (refined), light theme, walkthrough, multi-root helpers, optional AI integration points, tasks helpers (incl. Rust/Go) + richer health, dashboard project-kind display, HTML escaping fix, improved product icon, restored dashboard/commands entrypoint, release workflow, contribution guide |
 
 If `develop/modern-foundation` is not yet merged, continue from that branch (or merge it to `main` first).
 
@@ -50,9 +50,10 @@ Pinned upstream example (verify with `git submodule status`):
 - [x] Optional AI assistant integration points (provider-agnostic, user-controlled, off by default)
 - [x] Improved product icon (modern gradient V mark for activity bar, walkthrough, and installer resources)
 - [x] Dashboard panel reuse + live AI status + Getting Started button
-- [x] Additional keybindings for new project and health check
+- [x] Additional keybindings for new project, health check, and configure tasks
 - [x] Restored complete `extension.ts` entrypoint (previously placeholder) wiring all commands, sidebar, status bar, CSP webviews
-- [x] Tasks helpers: detect Node/Python/web, suggest/generate minimal `.vscode/tasks.json`, Configure Tasks command, richer health signals (Core 0.4.6)
+- [x] Tasks helpers: detect Node/Python/web/Rust/Go, suggest/generate minimal `.vscode/tasks.json`, Configure Tasks command, richer health signals (Core 0.4.6–0.4.7)
+- [x] Dashboard shows detected project kind; HTML escaping in webviews is correct
 - [x] Integration CI
 - [x] Build workflow that packages VSIX
 - [x] Release workflow: tag `v*` publishes the VSIX plus `SHA256SUMS` on a GitHub Release
@@ -66,6 +67,6 @@ Pinned upstream example (verify with `git submodule status`):
 2. **Full Linux workbench compile** — harden `compile-workbench-linux` job against the pinned gulp/pnpm scripts.
 3. **Open VSX publish** for `veylora-core` when ready.
 4. **Installers** — signed or portable archives after the workbench compile is reliable.
-5. Further recommended-extensions polish or additional scaffolds if desired.
+5. Further recommended-extensions polish or additional scaffolds (e.g. TypeScript) if desired.
 
 Non-goals: rewriting the editor from scratch; shipping MS branding/Marketplace; forcing any specific AI vendor.
