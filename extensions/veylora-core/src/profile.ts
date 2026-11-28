@@ -10,6 +10,8 @@ export const MODERN_PROFILE: Record<string, unknown> = {
   'editor.stickyScroll.enabled': true,
   'editor.bracketPairColorization.enabled': true,
   'editor.guides.bracketPairs': 'active',
+  'editor.guides.indentation': true,
+  'editor.fontLigatures': true,
   'editor.smoothScrolling': true,
   'editor.cursorSmoothCaretAnimation': 'on',
   'editor.linkedEditing': true,
@@ -17,25 +19,36 @@ export const MODERN_PROFILE: Record<string, unknown> = {
   'editor.largeFileOptimizations': true,
   'workbench.list.smoothScrolling': true,
   'workbench.startupEditor': 'none',
+  'workbench.editor.enablePreview': false,
+  'workbench.editor.limit.enabled': true,
+  'workbench.editor.limit.value': 8,
   'files.trimTrailingWhitespace': true,
   'files.insertFinalNewline': true,
+  'files.autoSave': 'afterDelay',
+  'files.autoSaveDelay': 1000,
   'files.watcherExclude': {
     '**/.git/objects/**': true,
     '**/.git/subtree-cache/**': true,
     '**/node_modules/**': true,
     '**/.venv/**': true,
     '**/venv/**': true,
-    '**/dist/**': true
+    '**/dist/**': true,
+    '**/__pycache__/**': true
   },
   'search.exclude': {
     '**/node_modules': true,
     '**/.venv': true,
     '**/venv': true,
-    '**/dist': true
+    '**/dist': true,
+    '**/__pycache__': true
   },
+  'search.followSymlinks': false,
   'explorer.compactFolders': false,
+  'explorer.confirmDragAndDrop': false,
   'telemetry.telemetryLevel': 'off',
-  'git.autofetch': true
+  'update.showReleaseNotes': false,
+  'git.autofetch': true,
+  'git.confirmSync': false
 };
 
 export function profileEntries(): Array<[string, unknown]> {
