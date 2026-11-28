@@ -14,7 +14,7 @@ This document is the single entry point for another AI or developer taking over.
 | --- | --- | --- |
 | **Runtime** | Real desktop IDE | `vendor/code-oss` (Git submodule → `microsoft/vscode`) |
 | **Product identity** | Name, Open VSX, no MS Marketplace | `scripts/apply-branding.mjs` → patches `product.json` |
-| **First-party features** | Dashboard, workspace, theme, diagnostics, scaffolds, profile, multi-root helpers, optional AI points | `extensions/veylora-core/` |
+| **First-party features** | Dashboard, workspace, theme, diagnostics, scaffolds, profile, multi-root helpers, tasks helpers, optional AI points | `extensions/veylora-core/` |
 | **Dev orchestration** | Bootstrap / watch / launch | `scripts/*.mjs` |
 | **Legacy prototype** | Old PyQt6 editor — **reference only** | `veylora/`, `legacy/` |
 | **Compat entry** | `python main.py` → same Code-OSS launcher | `main.py` |
@@ -28,7 +28,7 @@ This document is the single entry point for another AI or developer taking over.
 | Ref | Meaning |
 | --- | --- |
 | `main` | Last merged foundation (Code-OSS adoption, Core ~0.2, basic CI) |
-| `develop/modern-foundation` | **Preferred work branch** — Core 0.4.5, scaffolds, modern profile, light theme, walkthrough, multi-root helpers, optional AI integration points, improved product icon, restored dashboard/commands entrypoint, release workflow |
+| `develop/modern-foundation` | **Preferred work branch** — Core 0.4.6, scaffolds, modern profile, light theme, walkthrough, multi-root helpers, optional AI integration points, improved product icon, restored dashboard/commands entrypoint, tasks helpers, richer health, release workflow |
 
 If `develop/modern-foundation` is not yet merged, continue from that branch (or merge it to `main` first).
 
@@ -52,6 +52,8 @@ Pinned upstream example (verify with `git submodule status`):
 - [x] Dashboard panel reuse + live AI status + Getting Started button
 - [x] Additional keybindings for new project and health check
 - [x] Restored complete `extension.ts` entrypoint (previously placeholder) wiring all commands, sidebar, status bar, CSP webviews
+- [x] Tasks helpers (`veylora.createTasks`) + richer workspace health signals (git, tasks, markers)
+- [x] Settings profile refinements (auto-save, editor limits, extra privacy/performance defaults)
 - [x] Integration CI
 - [x] Build workflow that packages VSIX
 - [x] Release workflow: tag `v*` publishes the VSIX plus `SHA256SUMS` on a GitHub Release

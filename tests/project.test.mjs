@@ -10,7 +10,7 @@ const manifest = JSON.parse(
 );
 const rootManifest = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'));
 
-test('Veylora Core declares dashboard, health, welcome, scaffold, profile and AI commands', () => {
+test('Veylora Core declares dashboard, health, welcome, scaffold, profile, AI and tasks commands', () => {
   const commands = manifest.contributes.commands.map((item) => item.command);
   assert.ok(commands.includes('veylora.openDashboard'));
   assert.ok(commands.includes('veylora.createWorkspaceConfig'));
@@ -20,8 +20,9 @@ test('Veylora Core declares dashboard, health, welcome, scaffold, profile and AI
   assert.ok(commands.includes('veylora.applyModernProfile'));
   assert.ok(commands.includes('veylora.applyProfileToAll'));
   assert.ok(commands.includes('veylora.configureAI'));
+  assert.ok(commands.includes('veylora.createTasks'));
   assert.equal(manifest.main, './dist/extension.js');
-  assert.equal(manifest.version, '0.4.5');
+  assert.equal(manifest.version, '0.4.6');
 });
 
 test('Veylora contributes activity bar view, themes, keybindings and walkthrough', () => {
@@ -37,6 +38,9 @@ test('Veylora contributes activity bar view, themes, keybindings and walkthrough
   );
   assert.ok(
     manifest.contributes.keybindings.some((item) => item.command === 'veylora.workspaceHealth')
+  );
+  assert.ok(
+    manifest.contributes.keybindings.some((item) => item.command === 'veylora.createTasks')
   );
   assert.ok(manifest.contributes.walkthroughs.some((item) => item.id === 'veylora.gettingStarted'));
 });
@@ -61,7 +65,7 @@ test('cross-platform development commands point to Node orchestration scripts', 
   assert.equal(rootManifest.scripts.bootstrap, 'node scripts/bootstrap.mjs');
   assert.equal(rootManifest.scripts['dev:watch'], 'node scripts/watch.mjs');
   assert.equal(rootManifest.scripts['dev:launch'], 'node scripts/launch.mjs');
-  assert.equal(rootManifest.version, '0.4.5');
+  assert.equal(rootManifest.version, '0.4.6');
 });
 
 test('all Veylora Node orchestration scripts parse successfully', () => {
