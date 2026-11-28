@@ -17,25 +17,36 @@ export const MODERN_PROFILE: Record<string, unknown> = {
   'editor.largeFileOptimizations': true,
   'workbench.list.smoothScrolling': true,
   'workbench.startupEditor': 'none',
+  'workbench.editor.enablePreview': false,
+  'workbench.editor.enablePreviewFromQuickOpen': false,
   'files.trimTrailingWhitespace': true,
   'files.insertFinalNewline': true,
+  'files.autoSave': 'afterDelay',
   'files.watcherExclude': {
     '**/.git/objects/**': true,
     '**/.git/subtree-cache/**': true,
     '**/node_modules/**': true,
     '**/.venv/**': true,
     '**/venv/**': true,
-    '**/dist/**': true
+    '**/dist/**': true,
+    '**/.tox/**': true,
+    '**/__pycache__/**': true
   },
   'search.exclude': {
     '**/node_modules': true,
     '**/.venv': true,
     '**/venv': true,
-    '**/dist': true
+    '**/dist': true,
+    '**/.tox': true,
+    '**/__pycache__': true
   },
   'explorer.compactFolders': false,
   'telemetry.telemetryLevel': 'off',
-  'git.autofetch': true
+  'update.mode': 'manual',
+  'extensions.autoUpdate': false,
+  'extensions.autoCheckUpdates': false,
+  'git.autofetch': true,
+  'git.confirmSync': false
 };
 
 export function profileEntries(): Array<[string, unknown]> {
