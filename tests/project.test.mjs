@@ -22,7 +22,7 @@ test('Veylora Core declares dashboard, health, welcome, scaffold, profile, AI an
   assert.ok(commands.includes('veylora.configureAI'));
   assert.ok(commands.includes('veylora.configureTasks'));
   assert.equal(manifest.main, './dist/extension.js');
-  assert.equal(manifest.version, '0.4.6');
+  assert.equal(manifest.version, '0.4.7');
 });
 
 test('Veylora contributes activity bar view, themes, keybindings and walkthrough', () => {
@@ -38,6 +38,9 @@ test('Veylora contributes activity bar view, themes, keybindings and walkthrough
   );
   assert.ok(
     manifest.contributes.keybindings.some((item) => item.command === 'veylora.workspaceHealth')
+  );
+  assert.ok(
+    manifest.contributes.keybindings.some((item) => item.command === 'veylora.configureTasks')
   );
   assert.ok(manifest.contributes.walkthroughs.some((item) => item.id === 'veylora.gettingStarted'));
 });
@@ -62,7 +65,7 @@ test('cross-platform development commands point to Node orchestration scripts', 
   assert.equal(rootManifest.scripts.bootstrap, 'node scripts/bootstrap.mjs');
   assert.equal(rootManifest.scripts['dev:watch'], 'node scripts/watch.mjs');
   assert.equal(rootManifest.scripts['dev:launch'], 'node scripts/launch.mjs');
-  assert.equal(rootManifest.version, '0.4.6');
+  assert.equal(rootManifest.version, '0.4.7');
 });
 
 test('all Veylora Node orchestration scripts parse successfully', () => {

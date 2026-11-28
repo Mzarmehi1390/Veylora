@@ -2,7 +2,7 @@
   "name": "veylora-core",
   "displayName": "Veylora Core",
   "description": "First-party workspace, onboarding, diagnostics and modern defaults for Veylora IDE.",
-  "version": "0.4.6",
+  "version": "0.4.7",
   "publisher": "veylora",
   "license": "MIT",
   "engines": {
@@ -101,6 +101,11 @@
         "command": "veylora.workspaceHealth",
         "key": "ctrl+shift+alt+h",
         "mac": "cmd+shift+alt+h"
+      },
+      {
+        "command": "veylora.configureTasks",
+        "key": "ctrl+shift+alt+t",
+        "mac": "cmd+shift+alt+t"
       }
     ],
     "viewsContainers": {
@@ -204,7 +209,7 @@
           {
             "id": "scaffold",
             "title": "Scaffold a project",
-            "description": "Add a Python, Node, or web starter. Files you already have are left untouched.\n[New Project](command:veylora.newProject)",
+            "description": "Add a Python, Node, TypeScript, or web starter. Files you already have are left untouched.\n[New Project](command:veylora.newProject)",
             "media": {
               "svg": "resources/veylora.svg",
               "altText": "Veylora mark"
