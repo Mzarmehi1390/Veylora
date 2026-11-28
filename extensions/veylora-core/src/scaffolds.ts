@@ -1,4 +1,4 @@
-export const SCAFFOLD_IDS = ['python', 'node', 'web'] as const;
+export const SCAFFOLD_IDS = ['python', 'node', 'web', 'typescript'] as const;
 
 export type ScaffoldId = (typeof SCAFFOLD_IDS)[number];
 
@@ -159,6 +159,59 @@ const SCAFFOLDS: readonly ScaffoldTemplate[] = [
           'Static page created with Veylora. Scripts and styles are local — nothing is loaded from a third party.',
           'python -m http.server 5173',
           'Then open http://127.0.0.1:5173/ .'
+        )
+      }
+    ]
+  },
+  {
+    id: 'typescript',
+    label: 'TypeScript',
+    detail: 'Minimal TypeScript Node starter with tsconfig and a build task',
+    openPath: 'src/index.ts',
+    files: (context) => [
+      {
+        relativePath: 'package.json',
+        contents: tsPackage(context.projectName)
+      },
+      {
+        relativePath: 'tsconfig.json',
+        contents: tsConfig()
+      },
+      {
+        relativePath: 'src/index.ts',
+        contents: tsIndex(context.displayName)
+      },
+      {
+        relativePath: '.gitignore',
+        contents: 'node_modules/\ndist/\n.DS_Store\n'
+      },
+      {
+        relativePath: '.vscode/tasks.json',
+        contents: tasksJson([
+          {
+            label: 'Build TypeScript',
+            type: 'shell',
+            command: 'npx',
+            args: ['--yes', 'typescript', 'tsc', '-p', '.'],
+            group: { kind: 'build', isDefault: true },
+            problemMatcher: ['$tsc']
+          },
+          {
+            label: 'Run compiled',
+            type: 'shell',
+            command: 'node',
+            args: ['dist/index.js'],
+            dependsOn: 'Build TypeScript'
+          }
+        ])
+      },
+      {
+        relativePath: 'README.md',
+        contents: readme(
+          context.displayName,
+          'TypeScript Node app created with Veylora. TypeScript is installed on demand via npx.',
+          'npx --yes typescript tsc -p . && node dist/index.js',
+          'Requires Node.js 22+. The build task uses npx to avoid a permanent dependency.'
         )
       }
     ]
@@ -401,6 +454,49 @@ import { greet } from './index.js';
 test('greet names the caller', () => {
   assert.match(greet('demo'), /demo/);
 });
+`;
+}
+
+function tsPackage(name: string): string {
+  return jsonText({
+    name,
+    version: '0.1.0',
+    private: true,
+    type: 'module',
+    description: 'TypeScript app scaffolded by Veylora.',
+    scripts: {
+      build: 'npx --yes typescript tsc -p .',
+      start: 'node dist/index.js'
+    },
+    engines: {
+      node: '>=22'
+    }
+  });
+}
+
+function tsConfig(): string {
+  return jsonText({
+    compilerOptions: {
+      target: 'ES2022',
+      module: 'NodeNext',
+      moduleResolution: 'NodeNext',
+      outDir: 'dist',
+      rootDir: 'src',
+      strict: true,
+      esModuleInterop: true,
+      skipLibCheck: true,
+      forceConsistentCasingInFileNames: true
+    },
+    include: ['src/**/*']
+  });
+}
+
+function tsIndex(displayName: string): string {
+  return `export function greet(name = ${JSON.stringify(displayName)}): string {
+  return \`Hello from \${name}\`;
+}
+
+console.log(greet());
 `;
 }
 

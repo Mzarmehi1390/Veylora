@@ -67,7 +67,14 @@ jobs:
       - name: System dependencies for Electron/native builds
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential pkg-config libx11-dev libxkbfile-dev libsecret-1-dev
+          sudo apt-get install -y build-essential pkg-config libx11-dev libxkbfile-dev libsecret-1-dev \
+            libnss3-dev libatk-bridge2.0-dev libgtk-3-dev libgbm-dev libasound2-dev
+
+      - name: Tool versions
+        run: |
+          node --version
+          npm --version
+          corepack --version || true
 
       - name: Bootstrap upstream and extension
         run: |
@@ -81,6 +88,8 @@ jobs:
         working-directory: vendor/code-oss
         run: |
           corepack enable
+          echo "pnpm version:"
+          corepack pnpm --version || true
           # Prefer the project's documented compile entry; fall back gracefully.
           if corepack pnpm run compile --help >/dev/null 2>&1; then
             corepack pnpm run compile
