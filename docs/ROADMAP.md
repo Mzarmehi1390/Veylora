@@ -28,7 +28,7 @@ Phased plan for the product layer on Code - OSS. The editor engine is not rewrit
 ## Phase 2 — Differentiation & reliability (in progress)
 
 - [ ] Harden `compile-workbench-linux` job against the pinned gulp/pnpm scripts (manual/tag only)
-- [ ] Recommended extensions curation + contribution guide polish
+- [x] Recommended extensions curation + contribution guide polish (`docs/RECOMMENDED.md`)
 - [x] Tasks helpers and richer workspace health signals (Core 0.4.6)
 - [x] Settings profile refinements (more privacy/performance defaults)
 - [ ] Open VSX publish for `veylora-core` when ready

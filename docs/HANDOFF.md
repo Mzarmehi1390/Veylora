@@ -54,6 +54,7 @@ Pinned upstream example (verify with `git submodule status`):
 - [x] Restored complete `extension.ts` entrypoint (previously placeholder) wiring all commands, sidebar, status bar, CSP webviews
 - [x] Tasks helpers (`veylora.createTasks`) + richer workspace health signals (git, tasks, markers)
 - [x] Settings profile refinements (auto-save, editor limits, extra privacy/performance defaults)
+- [x] Recommended extensions curation (`docs/RECOMMENDED.md`)
 - [x] Integration CI
 - [x] Build workflow that packages VSIX
 - [x] Release workflow: tag `v*` publishes the VSIX plus `SHA256SUMS` on a GitHub Release
@@ -67,6 +68,6 @@ Pinned upstream example (verify with `git submodule status`):
 2. **Full Linux workbench compile** — harden `compile-workbench-linux` job against the pinned gulp/pnpm scripts.
 3. **Open VSX publish** for `veylora-core` when ready.
 4. **Installers** — signed or portable archives after the workbench compile is reliable.
-5. **Recommended extensions** curation and contribution guide polish.
+5. Further contribution guide polish or installer packaging.
 
 Non-goals: rewriting the editor from scratch; shipping MS branding/Marketplace; forcing any specific AI vendor.
