@@ -50,6 +50,7 @@ jobs:
           retention-days: 30
 
   # Full Code - OSS compile is expensive. Trigger manually or from release tags.
+  # Hardened with common Electron/native deps; still manual/tag only.
   compile-workbench-linux:
     name: Compile Code-OSS (Linux)
     runs-on: ubuntu-latest
@@ -67,7 +68,12 @@ jobs:
       - name: System dependencies for Electron/native builds
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential pkg-config libx11-dev libxkbfile-dev libsecret-1-dev
+          sudo apt-get install -y \
+            build-essential pkg-config \
+            libx11-dev libxkbfile-dev libsecret-1-dev \
+            libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 \
+            libdrm2 libxcomposite1 libxdamage1 libxrandr2 libgbm1 \
+            libpango-1.0-0 libcairo2 libasound2 libxss1 libxtst6
 
       - name: Bootstrap upstream and extension
         run: |
