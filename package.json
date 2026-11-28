@@ -1,8 +1,8 @@
 {
   "name": "veylora",
   "private": true,
-  "version": "0.2.0",
-  "description": "A Veylora-branded desktop IDE built on the open-source Code - OSS workbench.",
+  "version": "0.4.7",
+  "description": "A modern, privacy-first desktop IDE built on the open-source Code - OSS workbench.",
   "engines": {
     "node": ">=22"
   },
@@ -13,6 +13,7 @@
     "brand": "node scripts/apply-branding.mjs",
     "test": "node --test tests/*.test.mjs",
     "typecheck": "npm --prefix extensions/veylora-core run compile",
+    "package:extension": "npm --prefix extensions/veylora-core run package",
     "ci": "npm run test && npm run typecheck"
   }
 }

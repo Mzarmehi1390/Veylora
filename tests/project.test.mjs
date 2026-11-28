@@ -5,22 +5,52 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const rootPath = fileURLToPath(new URL('../', import.meta.url));
-const manifest = JSON.parse(await readFile(
-  new URL('../extensions/veylora-core/package.json', import.meta.url), 'utf8'
-));
+const manifest = JSON.parse(
+  await readFile(new URL('../extensions/veylora-core/package.json', import.meta.url), 'utf8')
+);
 const rootManifest = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'));
 
-test('Veylora Core declares its dashboard and initialization commands', () => {
+test('Veylora Core declares dashboard, health, welcome, scaffold, profile, AI, tasks and recommended extensions commands', () => {
   const commands = manifest.contributes.commands.map((item) => item.command);
   assert.ok(commands.includes('veylora.openDashboard'));
   assert.ok(commands.includes('veylora.createWorkspaceConfig'));
+  assert.ok(commands.includes('veylora.workspaceHealth'));
+  assert.ok(commands.includes('veylora.welcome'));
+  assert.ok(commands.includes('veylora.newProject'));
+  assert.ok(commands.includes('veylora.applyModernProfile'));
+  assert.ok(commands.includes('veylora.applyProfileToAll'));
+  assert.ok(commands.includes('veylora.configureAI'));
+  assert.ok(commands.includes('veylora.configureTasks'));
+  assert.ok(commands.includes('veylora.showRecommendedExtensions'));
   assert.equal(manifest.main, './dist/extension.js');
+  assert.equal(manifest.version, '0.4.7');
 });
 
-test('Veylora contributes a first-party activity bar view and theme', () => {
+test('Veylora contributes activity bar view, themes, keybindings and walkthrough', () => {
   assert.ok(manifest.contributes.viewsContainers.activitybar.some((item) => item.id === 'veylora'));
   assert.ok(manifest.contributes.views.veylora.some((item) => item.id === 'veylora.workspace'));
   assert.ok(manifest.contributes.themes.some((item) => item.label === 'Veylora Dark'));
+  assert.ok(manifest.contributes.themes.some((item) => item.label === 'Veylora Light'));
+  assert.ok(
+    manifest.contributes.keybindings.some((item) => item.command === 'veylora.openDashboard')
+  );
+  assert.ok(
+    manifest.contributes.keybindings.some((item) => item.command === 'veylora.newProject')
+  );
+  assert.ok(
+    manifest.contributes.keybindings.some((item) => item.command === 'veylora.workspaceHealth')
+  );
+  assert.ok(manifest.contributes.walkthroughs.some((item) => item.id === 'veylora.gettingStarted'));
+});
+
+test('modern defaults and optional AI configuration are declared', () => {
+  const props = manifest.contributes.configuration.properties;
+  assert.ok(props['veylora.modernDefaults.enabled']);
+  assert.ok(props['veylora.workspace.autoInitHint']);
+  assert.ok(props['veylora.ai.enabled']);
+  assert.ok(props['veylora.ai.provider']);
+  assert.equal(props['veylora.ai.provider'].default, 'none');
+  assert.equal(props['veylora.ai.enabled'].default, false);
 });
 
 test('the upstream Code - OSS source is pinned as a submodule', async () => {
@@ -33,6 +63,7 @@ test('cross-platform development commands point to Node orchestration scripts', 
   assert.equal(rootManifest.scripts.bootstrap, 'node scripts/bootstrap.mjs');
   assert.equal(rootManifest.scripts['dev:watch'], 'node scripts/watch.mjs');
   assert.equal(rootManifest.scripts['dev:launch'], 'node scripts/launch.mjs');
+  assert.equal(rootManifest.version, '0.4.7');
 });
 
 test('all Veylora Node orchestration scripts parse successfully', () => {
