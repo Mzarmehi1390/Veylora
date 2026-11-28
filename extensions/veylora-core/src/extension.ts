@@ -12,6 +12,7 @@ import {
 import { applyModernProfile, applyModernProfileToAll } from './profile';
 import { aiSettingsFilter, readAiStatus } from './ai';
 import { primaryFolderLabel, selectWorkspaceFolder, workspaceFolderCount } from './workspace';
+import { configureTasks, detectProjectKind, suggestTasks } from './tasks';
 
 const OUTPUT_CHANNEL = 'Veylora';
 const WORKSPACE_CONFIG_REL = '.veylora/workspace.json';
@@ -63,7 +64,8 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand('veylora.applyProfileToAll', () => applyModernProfileToAll(output)),
     vscode.commands.registerCommand('veylora.configureAI', () =>
       vscode.commands.executeCommand('workbench.action.openSettings', aiSettingsFilter())
-    )
+    ),
+    vscode.commands.registerCommand('veylora.configureTasks', () => configureTasks(output))
   );
 
   void maybeShowInitHint(context);
@@ -148,6 +150,9 @@ function openDashboard(context: vscode.ExtensionContext): void {
       case 'configureAI':
         await vscode.commands.executeCommand('veylora.configureAI');
         break;
+      case 'configureTasks':
+        await vscode.commands.executeCommand('veylora.configureTasks');
+        break;
       case 'refresh':
         await updateDashboardHtml(dashboardPanel!.webview);
         break;
@@ -202,6 +207,7 @@ async function updateDashboardHtml(webview: vscode.Webview): Promise<void> {
       <button data-cmd="health">Health Check</button>
       <button class="secondary" data-cmd="newProject">New Project</button>
       <button class="secondary" data-cmd="applyProfile">Apply Modern Profile</button>
+      <button class="secondary" data-cmd="configureTasks">Configure Tasks</button>
     </div>
   </div>
 
@@ -269,6 +275,9 @@ class VeyloraSidebarProvider implements vscode.WebviewViewProvider {
           break;
         case 'configureAI':
           await vscode.commands.executeCommand('veylora.configureAI');
+          break;
+        case 'configureTasks':
+          await vscode.commands.executeCommand('veylora.configureTasks');
           break;
         case 'refresh':
           await updateDashboardHtml(webviewView.webview);
@@ -426,6 +435,21 @@ async function workspaceHealth(): Promise<void> {
     lines.push('○ .vscode/settings.json not found (modern profile not applied yet)');
   }
 
+  const tasksUri = vscode.Uri.joinPath(folder.uri, '.vscode/tasks.json');
+  try {
+    await vscode.workspace.fs.stat(tasksUri);
+    lines.push('✓ .vscode/tasks.json present');
+  } catch {
+    lines.push('○ .vscode/tasks.json not found');
+  }
+
+  const kind = await detectProjectKind(folder);
+  const suggestion = suggestTasks(kind);
+  lines.push(`Project kind: ${kind}${suggestion.tasks.length ? ` (${suggestion.label})` : ''}`);
+  if (suggestion.tasks.length) {
+    lines.push('  suggested tasks: ' + suggestion.tasks.map((t) => t.label).join(', '));
+  }
+
   const ai = readAiStatus();
   lines.push('', `AI: ${ai.summary}`);
   lines.push(`Trusted: ${vscode.workspace.isTrusted ? 'yes' : 'no'}`);
@@ -463,8 +487,8 @@ function getNonce(): string {
 
 function escapeHtml(value: string): string {
   return value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
+    .replace(/&/g, '&')
+    .replace(/</g, '<')
+    .replace(/>/g, '>')
+    .replace(/"/g, '"');
 }
