@@ -176,6 +176,16 @@ async function updateDashboardHtml(webview: vscode.Webview): Promise<void> {
   const label = primaryFolderLabel();
   const trusted = vscode.workspace.isTrusted;
 
+  let projectKind = 'unknown';
+  const wsFolders = vscode.workspace.workspaceFolders;
+  if (wsFolders && wsFolders.length > 0) {
+    try {
+      projectKind = await detectProjectKind(wsFolders[0]);
+    } catch {
+      // ignore detection errors
+    }
+  }
+
   const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -202,7 +212,7 @@ async function updateDashboardHtml(webview: vscode.Webview): Promise<void> {
   <div class="card">
     <div class="status">Workspace</div>
     <div>${escapeHtml(label)}</div>
-    <div class="muted">${folders} folder(s) · ${trusted ? 'Trusted' : 'Restricted'}</div>
+    <div class="muted">${folders} folder(s) · ${trusted ? 'Trusted' : 'Restricted'} · kind: ${escapeHtml(projectKind)}</div>
     <div class="row">
       <button data-cmd="health">Health Check</button>
       <button class="secondary" data-cmd="newProject">New Project</button>
@@ -487,8 +497,8 @@ function getNonce(): string {
 
 function escapeHtml(value: string): string {
   return value
-    .replace(/&/g, '&')
-    .replace(/</g, '<')
-    .replace(/>/g, '>')
-    .replace(/"/g, '"');
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }

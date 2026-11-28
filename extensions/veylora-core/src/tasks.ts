@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { selectWorkspaceFolder } from './workspace';
 
-export type ProjectKind = 'node' | 'python' | 'web' | 'unknown';
+export type ProjectKind = 'node' | 'python' | 'web' | 'rust' | 'go' | 'unknown';
 
 export interface TaskSuggestion {
   kind: ProjectKind;
@@ -12,7 +12,9 @@ export interface TaskSuggestion {
 const MARKERS: Array<{ kind: ProjectKind; files: string[] }> = [
   { kind: 'node', files: ['package.json'] },
   { kind: 'python', files: ['pyproject.toml', 'requirements.txt', 'setup.py'] },
-  { kind: 'web', files: ['index.html', 'public/index.html'] }
+  { kind: 'web', files: ['index.html', 'public/index.html'] },
+  { kind: 'rust', files: ['Cargo.toml'] },
+  { kind: 'go', files: ['go.mod'] }
 ];
 
 export async function detectProjectKind(folder: vscode.WorkspaceFolder): Promise<ProjectKind> {
@@ -58,6 +60,26 @@ export function suggestTasks(kind: ProjectKind): TaskSuggestion {
         label: 'Static web',
         tasks: [
           { label: 'serve', command: 'npx', args: ['--yes', 'serve', '.'] }
+        ]
+      };
+    case 'rust':
+      return {
+        kind,
+        label: 'Rust / Cargo',
+        tasks: [
+          { label: 'cargo: build', command: 'cargo', args: ['build'] },
+          { label: 'cargo: test', command: 'cargo', args: ['test'] },
+          { label: 'cargo: run', command: 'cargo', args: ['run'] }
+        ]
+      };
+    case 'go':
+      return {
+        kind,
+        label: 'Go',
+        tasks: [
+          { label: 'go: build', command: 'go', args: ['build', '.'] },
+          { label: 'go: test', command: 'go', args: ['test', './...'] },
+          { label: 'go: run', command: 'go', args: ['run', '.'] }
         ]
       };
     default:
