@@ -1,196 +1,518 @@
 import * as vscode from 'vscode';
+import {
+  applyScaffoldMarker,
+  buildWorkspaceConfig,
+  isScaffoldId,
+  listScaffolds,
+  planScaffold,
+  renderScaffold,
+  scaffoldOpenPath,
+  type ScaffoldId
+} from './scaffolds';
+import { applyModernProfile, applyModernProfileToAll } from './profile';
+import { aiSettingsFilter, readAiStatus } from './ai';
+import { primaryFolderLabel, selectWorkspaceFolder, workspaceFolderCount } from './workspace';
+import { configureTasks, detectProjectKind, suggestTasks } from './tasks';
 
-type DashboardCommand = 'createWorkspaceConfig' | 'showDiagnostics' | 'openSettings';
+const OUTPUT_CHANNEL = 'Veylora';
+const WORKSPACE_CONFIG_REL = '.veylora/workspace.json';
+
+let dashboardPanel: vscode.WebviewPanel | undefined;
+let statusBarItem: vscode.StatusBarItem | undefined;
+let output: vscode.OutputChannel;
 
 export function activate(context: vscode.ExtensionContext): void {
-  const output = vscode.window.createOutputChannel('Veylora');
-  const commands = [
-    vscode.commands.registerCommand('veylora.openDashboard', async () => {
-      const panel = vscode.window.createWebviewPanel(
-        'veylora.dashboard',
-        'Veylora Dashboard',
-        vscode.ViewColumn.One,
-        { enableScripts: true, localResourceRoots: [context.extensionUri] }
-      );
-      panel.webview.html = renderDashboard(panel.webview, context.extensionUri);
-      panel.webview.onDidReceiveMessage(
-        (message: unknown) => handleDashboardMessage(message, output)
-      );
-    }),
-    vscode.commands.registerCommand('veylora.createWorkspaceConfig', () => initializeWorkspace(output)),
-    vscode.commands.registerCommand('veylora.showDiagnostics', () => writeDiagnostics(output)),
-    vscode.commands.registerCommand('veylora.openSettings', () =>
-      vscode.commands.executeCommand('workbench.action.openSettings', 'veylora')
-    )
-  ];
+  output = vscode.window.createOutputChannel(OUTPUT_CHANNEL);
+  context.subscriptions.push(output);
 
-  const view = vscode.window.registerWebviewViewProvider(
-    'veylora.workspace',
-    new WorkspaceViewProvider(context.extensionUri, output),
-    { webviewOptions: { retainContextWhenHidden: true } }
+  statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
+  statusBarItem.command = 'veylora.openDashboard';
+  statusBarItem.tooltip = 'Open Veylora Dashboard';
+  context.subscriptions.push(statusBarItem);
+  refreshStatusBar();
+  context.subscriptions.push(
+    vscode.workspace.onDidChangeWorkspaceFolders(() => refreshStatusBar()),
+    vscode.workspace.onDidChangeConfiguration((e) => {
+      if (e.affectsConfiguration('veylora')) refreshStatusBar();
+    })
   );
-  const statusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
-  statusBar.text = '$(code) Veylora';
-  statusBar.tooltip = 'Open Veylora Dashboard';
-  statusBar.command = 'veylora.openDashboard';
-  if (vscode.workspace.getConfiguration('veylora.workspace').get<boolean>('showStatusBarItem', true)) {
-    statusBar.show();
-  }
-  context.subscriptions.push(output, ...commands, view, statusBar);
-  output.appendLine('Veylora Core activated.');
+
+  const sidebarProvider = new VeyloraSidebarProvider(context.extensionUri);
+  context.subscriptions.push(
+    vscode.window.registerWebviewViewProvider('veylora.workspace', sidebarProvider, {
+      webviewOptions: { retainContextWhenHidden: false }
+    })
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('veylora.openDashboard', () => openDashboard(context)),
+    vscode.commands.registerCommand('veylora.createWorkspaceConfig', () => createWorkspaceConfig()),
+    vscode.commands.registerCommand('veylora.showDiagnostics', () => showDiagnostics()),
+    vscode.commands.registerCommand('veylora.openSettings', () =>
+      vscode.commands.executeCommand('workbench.action.openSettings', '@ext:veylora.veylora-core')
+    ),
+    vscode.commands.registerCommand('veylora.welcome', () =>
+      vscode.commands.executeCommand(
+        'workbench.action.openWalkthrough',
+        'veylora.veylora-core#veylora.gettingStarted',
+        false
+      )
+    ),
+    vscode.commands.registerCommand('veylora.workspaceHealth', () => workspaceHealth()),
+    vscode.commands.registerCommand('veylora.newProject', () => newProjectFromTemplate()),
+    vscode.commands.registerCommand('veylora.applyModernProfile', () => applyModernProfile(output)),
+    vscode.commands.registerCommand('veylora.applyProfileToAll', () => applyModernProfileToAll(output)),
+    vscode.commands.registerCommand('veylora.configureAI', () =>
+      vscode.commands.executeCommand('workbench.action.openSettings', aiSettingsFilter())
+    ),
+    vscode.commands.registerCommand('veylora.configureTasks', () => configureTasks(output)),
+    vscode.commands.registerCommand('veylora.showRecommendedExtensions', () => showRecommendedExtensions())
+  );
+
+  void maybeShowInitHint(context);
 }
 
 export function deactivate(): void {
-  // Extension resources are disposed through ExtensionContext.subscriptions.
+  dashboardPanel?.dispose();
+  dashboardPanel = undefined;
 }
 
-class WorkspaceViewProvider implements vscode.WebviewViewProvider {
-  constructor(
-    private readonly extensionUri: vscode.Uri,
-    private readonly output: vscode.OutputChannel
-  ) {}
+function refreshStatusBar(): void {
+  if (!statusBarItem) return;
+  const show = vscode.workspace.getConfiguration('veylora.workspace').get<boolean>('showStatusBarItem', true);
+  if (!show) {
+    statusBarItem.hide();
+    return;
+  }
+  const count = workspaceFolderCount();
+  const label = count === 0 ? '$(vm) Veylora' : `$(vm) Veylora (${count})`;
+  statusBarItem.text = label;
+  statusBarItem.show();
+}
 
-  resolveWebviewView(view: vscode.WebviewView): void {
-    view.webview.options = { enableScripts: true, localResourceRoots: [this.extensionUri] };
-    view.webview.html = renderDashboard(view.webview, this.extensionUri);
-    view.webview.onDidReceiveMessage(
-      (message: unknown) => handleDashboardMessage(message, this.output)
+async function maybeShowInitHint(context: vscode.ExtensionContext): Promise<void> {
+  if (!vscode.workspace.getConfiguration('veylora.workspace').get<boolean>('autoInitHint', true)) return;
+  const folder = await selectWorkspaceFolder();
+  if (!folder) return;
+  const configUri = vscode.Uri.joinPath(folder.uri, WORKSPACE_CONFIG_REL);
+  try {
+    await vscode.workspace.fs.stat(configUri);
+  } catch {
+    const key = `veylora.initHint.${folder.uri.toString()}`;
+    if (context.globalState.get<boolean>(key)) return;
+    const action = await vscode.window.showInformationMessage(
+      `Initialize a Veylora workspace for "${folder.name}"?`,
+      'Initialize',
+      'Later'
     );
+    if (action === 'Initialize') {
+      await createWorkspaceConfig();
+    }
+    await context.globalState.update(key, true);
   }
 }
 
-async function handleDashboardMessage(message: unknown, output: vscode.OutputChannel): Promise<void> {
-  if (!isDashboardMessage(message)) return;
-  switch (message.command) {
-    case 'createWorkspaceConfig': await initializeWorkspace(output); break;
-    case 'showDiagnostics': writeDiagnostics(output); break;
-    case 'openSettings':
-      await vscode.commands.executeCommand('workbench.action.openSettings', 'veylora');
-      break;
-  }
-}
-
-function isDashboardMessage(value: unknown): value is { command: DashboardCommand } {
-  if (typeof value !== 'object' || value === null || !('command' in value)) return false;
-  const command = (value as { command?: unknown }).command;
-  return command === 'createWorkspaceConfig' || command === 'showDiagnostics' || command === 'openSettings';
-}
-
-async function initializeWorkspace(output: vscode.OutputChannel): Promise<void> {
-  const folder = vscode.workspace.workspaceFolders?.[0];
-  if (!folder) {
-    void vscode.window.showWarningMessage('Open a project folder before initializing a Veylora workspace.');
+function openDashboard(context: vscode.ExtensionContext): void {
+  if (dashboardPanel) {
+    dashboardPanel.reveal(vscode.ViewColumn.One);
+    void updateDashboardHtml(dashboardPanel.webview);
     return;
   }
 
-  const directory = vscode.Uri.joinPath(folder.uri, '.veylora');
-  const configUri = vscode.Uri.joinPath(directory, 'workspace.json');
-  try {
-    await vscode.workspace.fs.stat(configUri);
-    const choice = await vscode.window.showWarningMessage(
-      'A Veylora workspace configuration already exists. Replace it?',
-      { modal: true },
-      'Replace'
-    );
-    if (choice !== 'Replace') return;
-  } catch {
-    // A missing file is the expected first-run path.
-  }
+  dashboardPanel = vscode.window.createWebviewPanel(
+    'veyloraDashboard',
+    'Veylora',
+    vscode.ViewColumn.One,
+    {
+      enableScripts: true,
+      localResourceRoots: [context.extensionUri],
+      retainContextWhenHidden: true
+    }
+  );
 
-  const config = {
-    schemaVersion: 1,
-    name: folder.name,
-    createdAt: new Date().toISOString(),
-    editor: { formatOnSave: true, tabSize: 2 },
-    tasks: []
-  };
-  try {
-    await vscode.workspace.fs.createDirectory(directory);
-    await vscode.workspace.fs.writeFile(
-      configUri,
-      new TextEncoder().encode(JSON.stringify(config, null, 2) + '\n')
-    );
-    output.appendLine('Initialized workspace: ' + folder.uri.fsPath);
-    void vscode.window.showInformationMessage('Veylora workspace initialized.');
-    const document = await vscode.workspace.openTextDocument(configUri);
-    await vscode.window.showTextDocument(document, vscode.ViewColumn.One);
-  } catch (error) {
-    const detail = error instanceof Error ? error.message : String(error);
-    output.appendLine('Workspace initialization failed: ' + detail);
-    void vscode.window.showErrorMessage('Could not initialize the Veylora workspace: ' + detail);
-  }
+  const disposable = dashboardPanel.webview.onDidReceiveMessage(async (message) => {
+    if (!message || typeof message !== 'object' || typeof message.type !== 'string') return;
+    switch (message.type) {
+      case 'openSettings':
+        await vscode.commands.executeCommand('veylora.openSettings');
+        break;
+      case 'welcome':
+        await vscode.commands.executeCommand('veylora.welcome');
+        break;
+      case 'health':
+        await vscode.commands.executeCommand('veylora.workspaceHealth');
+        break;
+      case 'newProject':
+        await vscode.commands.executeCommand('veylora.newProject');
+        break;
+      case 'applyProfile':
+        await vscode.commands.executeCommand('veylora.applyModernProfile');
+        break;
+      case 'configureAI':
+        await vscode.commands.executeCommand('veylora.configureAI');
+        break;
+      case 'configureTasks':
+        await vscode.commands.executeCommand('veylora.configureTasks');
+        break;
+      case 'recommended':
+        await vscode.commands.executeCommand('veylora.showRecommendedExtensions');
+        break;
+      case 'refresh':
+        await updateDashboardHtml(dashboardPanel!.webview);
+        break;
+      default:
+        break;
+    }
+  });
+
+  dashboardPanel.onDidDispose(() => {
+    disposable.dispose();
+    dashboardPanel = undefined;
+  });
+
+  void updateDashboardHtml(dashboardPanel.webview);
 }
 
-function writeDiagnostics(output: vscode.OutputChannel): void {
-  const folder = vscode.workspace.workspaceFolders?.[0];
-  const version = vscode.extensions.getExtension('veylora.veylora-core')?.packageJSON.version ?? 'development';
-  output.clear();
-  output.appendLine('Veylora IDE — Runtime Diagnostics');
-  output.appendLine('--------------------------------');
-  output.appendLine('Veylora Core: ' + version);
-  output.appendLine('Code - OSS API: ' + vscode.version);
-  output.appendLine('Platform: ' + process.platform + ' (' + process.arch + ')');
-  output.appendLine('Node runtime: ' + process.versions.node);
-  output.appendLine('Workspace: ' + (folder?.uri.fsPath ?? 'No folder opened'));
-  output.appendLine('Workspace folders: ' + (vscode.workspace.workspaceFolders?.length ?? 0));
-  output.show(true);
-}
+async function updateDashboardHtml(webview: vscode.Webview): Promise<void> {
+  const nonce = getNonce();
+  const ai = readAiStatus();
+  const folders = workspaceFolderCount();
+  const label = primaryFolderLabel();
+  const trusted = vscode.workspace.isTrusted;
 
-function renderDashboard(webview: vscode.Webview, extensionUri: vscode.Uri): string {
-  const nonce = createNonce();
-  const icon = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'resources', 'veylora.svg'));
-  const folder = vscode.workspace.workspaceFolders?.[0];
-  const name = escapeHtml(folder?.name ?? 'No folder opened');
-  const path = escapeHtml(folder?.uri.fsPath ?? 'Open a folder to get started');
-
-  return `<!DOCTYPE html>
+  const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${webview.cspSource}; style-src ${webview.cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}';">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'nonce-${nonce}'; script-src 'nonce-${nonce}'; base-uri 'none'; form-action 'none';">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Veylora</title>
-  <style>
-    :root { color-scheme: dark; }
-    body { margin: 0; padding: 22px 16px; color: var(--vscode-foreground); font-family: var(--vscode-font-family); }
-    .brand { display: flex; align-items: center; gap: 10px; margin-bottom: 24px; }
-    .brand img { width: 34px; height: 34px; }
-    h1 { margin: 0; font-size: 18px; font-weight: 650; }
-    .muted { color: var(--vscode-descriptionForeground); font-size: 12px; }
-    .card { padding: 14px; margin: 12px 0; border: 1px solid var(--vscode-panel-border); border-radius: 8px; background: var(--vscode-sideBar-background); }
-    .card h2 { margin: 0 0 8px; font-size: 13px; }
-    .path { overflow-wrap: anywhere; font-size: 11px; color: var(--vscode-descriptionForeground); }
-    button { width: 100%; margin-top: 9px; padding: 8px 10px; border: 0; border-radius: 5px; color: var(--vscode-button-foreground); background: var(--vscode-button-background); cursor: pointer; text-align: left; }
-    button:hover { background: var(--vscode-button-hoverBackground); }
-    .footer { margin-top: 22px; font-size: 11px; color: var(--vscode-descriptionForeground); }
+  <style nonce="${nonce}">
+    :root { color-scheme: light dark; --fg: #e6e6e6; --muted: #a0a0a0; --accent: #7c74f2; --bg: #1e1e1e; --card: #252526; }
+    body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--fg); margin: 0; padding: 1.5rem; }
+    h1 { margin: 0 0 0.5rem; font-size: 1.5rem; }
+    .muted { color: var(--muted); margin: 0 0 1.25rem; }
+    .card { background: var(--card); border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1rem; }
+    .row { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.75rem; }
+    button { background: var(--accent); color: white; border: none; border-radius: 6px; padding: 0.45rem 0.9rem; cursor: pointer; font-size: 0.9rem; }
+    button.secondary { background: transparent; border: 1px solid #555; color: var(--fg); }
+    .status { font-weight: 500; }
   </style>
 </head>
 <body>
-  <header class="brand"><img src="${icon}" alt="Veylora"><div><h1>Veylora IDE</h1><div class="muted">Code Beyond Limits.</div></div></header>
-  <section class="card"><h2>Current workspace</h2><strong>${name}</strong><p class="path">${path}</p><button data-command="createWorkspaceConfig">Initialize Veylora Workspace</button></section>
-  <section class="card"><h2>Developer tools</h2><button data-command="showDiagnostics">Show Runtime Diagnostics</button><button data-command="openSettings">Veylora Settings</button></section>
-  <p class="footer">Powered by the open-source Code - OSS workbench.</p>
+  <h1>Veylora</h1>
+  <p class="muted">Modern, privacy-first workspace on Code - OSS</p>
+
+  <div class="card">
+    <div class="status">Workspace</div>
+    <div>${escapeHtml(label)}</div>
+    <div class="muted">${folders} folder(s) · ${trusted ? 'Trusted' : 'Restricted'}</div>
+    <div class="row">
+      <button data-cmd="health">Health Check</button>
+      <button class="secondary" data-cmd="newProject">New Project</button>
+      <button class="secondary" data-cmd="applyProfile">Apply Modern Profile</button>
+      <button class="secondary" data-cmd="configureTasks">Configure Tasks</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="status">AI Assistant</div>
+    <div>${escapeHtml(ai.summary)}</div>
+    <div class="row">
+      <button data-cmd="configureAI">Configure AI</button>
+      <button class="secondary" data-cmd="refresh">Refresh</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="status">Getting Started</div>
+    <div class="row">
+      <button data-cmd="welcome">Open Walkthrough</button>
+      <button class="secondary" data-cmd="openSettings">Settings</button>
+      <button class="secondary" data-cmd="recommended">Recommended Extensions</button>
+    </div>
+  </div>
+
   <script nonce="${nonce}">
     const vscode = acquireVsCodeApi();
-    document.querySelectorAll('[data-command]').forEach((button) => {
-      button.addEventListener('click', () => vscode.postMessage({ command: button.dataset.command }));
+    document.body.addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-cmd]');
+      if (!btn) return;
+      vscode.postMessage({ type: btn.dataset.cmd });
     });
   </script>
 </body>
 </html>`;
+  webview.html = html;
 }
 
-function createNonce(): string {
-  const values = new Uint8Array(24);
-  crypto.getRandomValues(values);
-  return Array.from(values, (value) => value.toString(16).padStart(2, '0')).join('');
+class VeyloraSidebarProvider implements vscode.WebviewViewProvider {
+  constructor(private readonly extensionUri: vscode.Uri) {}
+
+  resolveWebviewView(
+    webviewView: vscode.WebviewView,
+    _context: vscode.WebviewViewResolveContext,
+    _token: vscode.CancellationToken
+  ): void {
+    webviewView.webview.options = {
+      enableScripts: true,
+      localResourceRoots: [this.extensionUri]
+    };
+    void updateDashboardHtml(webviewView.webview);
+
+    const disposable = webviewView.webview.onDidReceiveMessage(async (message) => {
+      if (!message || typeof message !== 'object' || typeof message.type !== 'string') return;
+      switch (message.type) {
+        case 'openSettings':
+          await vscode.commands.executeCommand('veylora.openSettings');
+          break;
+        case 'welcome':
+          await vscode.commands.executeCommand('veylora.welcome');
+          break;
+        case 'health':
+          await vscode.commands.executeCommand('veylora.workspaceHealth');
+          break;
+        case 'newProject':
+          await vscode.commands.executeCommand('veylora.newProject');
+          break;
+        case 'applyProfile':
+          await vscode.commands.executeCommand('veylora.applyModernProfile');
+          break;
+        case 'configureAI':
+          await vscode.commands.executeCommand('veylora.configureAI');
+          break;
+        case 'configureTasks':
+          await vscode.commands.executeCommand('veylora.configureTasks');
+          break;
+        case 'recommended':
+          await vscode.commands.executeCommand('veylora.showRecommendedExtensions');
+          break;
+        case 'refresh':
+          await updateDashboardHtml(webviewView.webview);
+          break;
+        default:
+          break;
+      }
+    });
+    webviewView.onDidDispose(() => disposable.dispose());
+  }
+}
+
+async function createWorkspaceConfig(): Promise<void> {
+  const folder = await selectWorkspaceFolder('Initialize workspace for which folder?');
+  if (!folder) {
+    void vscode.window.showWarningMessage('Open a project folder first.');
+    return;
+  }
+
+  const configUri = vscode.Uri.joinPath(folder.uri, WORKSPACE_CONFIG_REL);
+  try {
+    await vscode.workspace.fs.stat(configUri);
+    const replace = await vscode.window.showWarningMessage(
+      `.veylora/workspace.json already exists in "${folder.name}". Replace it?`,
+      { modal: true },
+      'Replace'
+    );
+    if (replace !== 'Replace') return;
+  } catch {
+    // first run
+  }
+
+  const modern = vscode.workspace.getConfiguration('veylora.modernDefaults').get<boolean>('enabled', true);
+  const config = buildWorkspaceConfig({
+    name: folder.name,
+    createdAt: new Date().toISOString(),
+    modern
+  });
+
+  const encoder = new TextEncoder();
+  await vscode.workspace.fs.writeFile(configUri, encoder.encode(JSON.stringify(config, null, 2) + '\n'));
+  output.appendLine(`Initialized workspace config at ${configUri.fsPath}`);
+  void vscode.window.showInformationMessage(`Veylora workspace initialized for "${folder.name}".`);
+  if (dashboardPanel) void updateDashboardHtml(dashboardPanel.webview);
+}
+
+async function newProjectFromTemplate(): Promise<void> {
+  const folder = await selectWorkspaceFolder('Scaffold project into which folder?');
+  if (!folder) {
+    void vscode.window.showWarningMessage('Open a project folder first.');
+    return;
+  }
+
+  const picks = listScaffolds().map((s) => ({
+    label: s.label,
+    description: s.detail,
+    id: s.id as ScaffoldId
+  }));
+  const picked = await vscode.window.showQuickPick(picks, {
+    placeHolder: 'Choose a project template',
+    title: 'Veylora: New Project from Template'
+  });
+  if (!picked || !isScaffoldId(picked.id)) return;
+
+  const name = folder.name;
+  const files = renderScaffold(picked.id, { projectName: name, displayName: name });
+
+  const existing: string[] = [];
+  for (const file of files) {
+    const uri = vscode.Uri.joinPath(folder.uri, file.relativePath);
+    try {
+      await vscode.workspace.fs.stat(uri);
+      existing.push(file.relativePath);
+    } catch {
+      // missing
+    }
+  }
+
+  const plan = planScaffold(files, existing);
+  const encoder = new TextEncoder();
+  for (const file of plan.create) {
+    const uri = vscode.Uri.joinPath(folder.uri, file.relativePath);
+    const dir = vscode.Uri.joinPath(uri, '..');
+    try {
+      await vscode.workspace.fs.createDirectory(dir);
+    } catch {
+      // exists
+    }
+    await vscode.workspace.fs.writeFile(uri, encoder.encode(file.contents));
+  }
+
+  // Stamp workspace config
+  const configUri = vscode.Uri.joinPath(folder.uri, WORKSPACE_CONFIG_REL);
+  let doc: Record<string, unknown> | undefined;
+  try {
+    const raw = await vscode.workspace.fs.readFile(configUri);
+    doc = JSON.parse(new TextDecoder().decode(raw)) as Record<string, unknown>;
+  } catch {
+    doc = buildWorkspaceConfig({
+      name,
+      createdAt: new Date().toISOString(),
+      modern: vscode.workspace.getConfiguration('veylora.modernDefaults').get<boolean>('enabled', true)
+    });
+  }
+  const stamped = applyScaffoldMarker(doc, picked.id, new Date().toISOString());
+  if (stamped.ok) {
+    await vscode.workspace.fs.writeFile(
+      configUri,
+      encoder.encode(JSON.stringify(stamped.document, null, 2) + '\n')
+    );
+  }
+
+  const openPath = scaffoldOpenPath(picked.id);
+  const openUri = vscode.Uri.joinPath(folder.uri, openPath);
+  try {
+    const docUri = await vscode.workspace.openTextDocument(openUri);
+    await vscode.window.showTextDocument(docUri);
+  } catch {
+    // ignore open failure
+  }
+
+  output.appendLine(
+    `Scaffolded ${picked.id} into ${folder.uri.fsPath} (created ${plan.create.length}, skipped ${plan.skip.length}).`
+  );
+  void vscode.window.showInformationMessage(
+    `Created ${plan.create.length} file(s) from the ${picked.label} template${plan.skip.length ? ` (${plan.skip.length} existing skipped)` : ''}.`
+  );
+  if (dashboardPanel) void updateDashboardHtml(dashboardPanel.webview);
+}
+
+async function workspaceHealth(): Promise<void> {
+  const folder = await selectWorkspaceFolder('Run health check on which folder?');
+  if (!folder) {
+    void vscode.window.showWarningMessage('Open a project folder first.');
+    return;
+  }
+
+  const lines: string[] = [`Veylora Workspace Health — ${folder.name}`, `Path: ${folder.uri.fsPath}`, ''];
+
+  const configUri = vscode.Uri.joinPath(folder.uri, WORKSPACE_CONFIG_REL);
+  try {
+    const raw = await vscode.workspace.fs.readFile(configUri);
+    const parsed = JSON.parse(new TextDecoder().decode(raw));
+    lines.push(`✓ .veylora/workspace.json present (schema ${parsed.schemaVersion ?? '?'})`);
+    if (parsed.scaffold?.id) lines.push(`  scaffold: ${parsed.scaffold.id}`);
+  } catch {
+    lines.push('✗ .veylora/workspace.json missing — run Initialize Workspace');
+  }
+
+  const settingsUri = vscode.Uri.joinPath(folder.uri, '.vscode/settings.json');
+  try {
+    await vscode.workspace.fs.stat(settingsUri);
+    lines.push('✓ .vscode/settings.json present');
+  } catch {
+    lines.push('○ .vscode/settings.json not found (modern profile not applied yet)');
+  }
+
+  const tasksUri = vscode.Uri.joinPath(folder.uri, '.vscode/tasks.json');
+  try {
+    await vscode.workspace.fs.stat(tasksUri);
+    lines.push('✓ .vscode/tasks.json present');
+  } catch {
+    lines.push('○ .vscode/tasks.json not found');
+  }
+
+  const kind = await detectProjectKind(folder);
+  const suggestion = suggestTasks(kind);
+  lines.push(`Project kind: ${kind}${suggestion.tasks.length ? ` (${suggestion.label})` : ''}`);
+  if (suggestion.tasks.length) {
+    lines.push('  suggested tasks: ' + suggestion.tasks.map((t) => t.label).join(', '));
+  }
+
+  const ai = readAiStatus();
+  lines.push('', `AI: ${ai.summary}`);
+  lines.push(`Trusted: ${vscode.workspace.isTrusted ? 'yes' : 'no'}`);
+  lines.push(`Folders in workspace: ${workspaceFolderCount()}`);
+
+  output.clear();
+  for (const line of lines) output.appendLine(line);
+  output.show(true);
+  void vscode.window.showInformationMessage('Veylora health check written to the Veylora output channel.');
+}
+
+function showDiagnostics(): void {
+  const lines = [
+    'Veylora Runtime Diagnostics',
+    `Version: ${vscode.extensions.getExtension('veylora.veylora-core')?.packageJSON.version ?? 'unknown'}`,
+    `VS Code: ${vscode.version}`,
+    `Workspace folders: ${workspaceFolderCount()}`,
+    `Primary: ${primaryFolderLabel()}`,
+    `Trusted: ${vscode.workspace.isTrusted}`,
+    `AI: ${readAiStatus().summary}`,
+    `Platform: ${process.platform} ${process.arch}`,
+    `Node: ${process.version}`
+  ];
+  output.clear();
+  for (const line of lines) output.appendLine(line);
+  output.show(true);
+}
+
+async function showRecommendedExtensions(): Promise<void> {
+  const items = [
+    { label: 'Python', detail: 'ms-python.python (or equivalent on Open VSX)', query: 'python' },
+    { label: 'ESLint', detail: 'dbaeumer.vscode-eslint', query: 'eslint' },
+    { label: 'Prettier', detail: 'esbenp.prettier-vscode', query: 'prettier' },
+    { label: 'Markdown', detail: 'yzhang.markdown-all-in-one', query: 'markdown' }
+  ];
+  const picked = await vscode.window.showQuickPick(items, {
+    placeHolder: 'Suggested extensions (install from Open VSX; not forced)',
+    title: 'Veylora: Recommended Extensions'
+  });
+  if (!picked) return;
+  await vscode.commands.executeCommand('workbench.extensions.search', picked.query);
+  output.appendLine(`Opened Extensions search for "${picked.query}". Install from Open VSX if desired.`);
+}
+
+function getNonce(): string {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let result = '';
+  for (let i = 0; i < 32; i++) result += chars.charAt(Math.floor(Math.random() * chars.length));
+  return result;
 }
 
 function escapeHtml(value: string): string {
-  return value.replace(/[&<>"']/g, (character) => {
-    const entities: Record<string, string> = {
-      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-    };
-    return entities[character] ?? character;
-  });
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }
