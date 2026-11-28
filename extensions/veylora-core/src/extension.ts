@@ -12,9 +12,11 @@ import {
 import { applyModernProfile, applyModernProfileToAll } from './profile';
 import { aiSettingsFilter, readAiStatus } from './ai';
 import { primaryFolderLabel, selectWorkspaceFolder, workspaceFolderCount } from './workspace';
+import { defaultTasksDocument, suggestTasks, tasksFileExists } from './tasks';
 
 const OUTPUT_CHANNEL = 'Veylora';
 const WORKSPACE_CONFIG_REL = '.veylora/workspace.json';
+const TASKS_REL = '.vscode/tasks.json';
 
 let dashboardPanel: vscode.WebviewPanel | undefined;
 let statusBarItem: vscode.StatusBarItem | undefined;
@@ -63,7 +65,8 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand('veylora.applyProfileToAll', () => applyModernProfileToAll(output)),
     vscode.commands.registerCommand('veylora.configureAI', () =>
       vscode.commands.executeCommand('workbench.action.openSettings', aiSettingsFilter())
-    )
+    ),
+    vscode.commands.registerCommand('veylora.createTasks', () => createTasks())
   );
 
   void maybeShowInitHint(context);
@@ -148,6 +151,9 @@ function openDashboard(context: vscode.ExtensionContext): void {
       case 'configureAI':
         await vscode.commands.executeCommand('veylora.configureAI');
         break;
+      case 'createTasks':
+        await vscode.commands.executeCommand('veylora.createTasks');
+        break;
       case 'refresh':
         await updateDashboardHtml(dashboardPanel!.webview);
         break;
@@ -202,6 +208,7 @@ async function updateDashboardHtml(webview: vscode.Webview): Promise<void> {
       <button data-cmd="health">Health Check</button>
       <button class="secondary" data-cmd="newProject">New Project</button>
       <button class="secondary" data-cmd="applyProfile">Apply Modern Profile</button>
+      <button class="secondary" data-cmd="createTasks">Create Tasks</button>
     </div>
   </div>
 
@@ -269,6 +276,9 @@ class VeyloraSidebarProvider implements vscode.WebviewViewProvider {
           break;
         case 'configureAI':
           await vscode.commands.executeCommand('veylora.configureAI');
+          break;
+        case 'createTasks':
+          await vscode.commands.executeCommand('veylora.createTasks');
           break;
         case 'refresh':
           await updateDashboardHtml(webviewView.webview);
@@ -399,6 +409,37 @@ async function newProjectFromTemplate(): Promise<void> {
   if (dashboardPanel) void updateDashboardHtml(dashboardPanel.webview);
 }
 
+async function createTasks(): Promise<void> {
+  const folder = await selectWorkspaceFolder('Create tasks.json for which folder?');
+  if (!folder) {
+    void vscode.window.showWarningMessage('Open a project folder first.');
+    return;
+  }
+
+  const tasksUri = vscode.Uri.joinPath(folder.uri, TASKS_REL);
+  if (await tasksFileExists(folder)) {
+    const replace = await vscode.window.showWarningMessage(
+      `.vscode/tasks.json already exists in "${folder.name}". Replace it?`,
+      { modal: true },
+      'Replace'
+    );
+    if (replace !== 'Replace') return;
+  }
+
+  const tasks = await suggestTasks(folder);
+  const content = defaultTasksDocument(tasks);
+  const dir = vscode.Uri.joinPath(folder.uri, '.vscode');
+  try {
+    await vscode.workspace.fs.createDirectory(dir);
+  } catch {
+    // exists
+  }
+  await vscode.workspace.fs.writeFile(tasksUri, new TextEncoder().encode(content));
+  output.appendLine(`Created tasks.json at ${tasksUri.fsPath} (${tasks.length} task(s)).`);
+  void vscode.window.showInformationMessage(`Tasks file created for "${folder.name}".`);
+  if (dashboardPanel) void updateDashboardHtml(dashboardPanel.webview);
+}
+
 async function workspaceHealth(): Promise<void> {
   const folder = await selectWorkspaceFolder('Run health check on which folder?');
   if (!folder) {
@@ -424,6 +465,30 @@ async function workspaceHealth(): Promise<void> {
     lines.push('✓ .vscode/settings.json present');
   } catch {
     lines.push('○ .vscode/settings.json not found (modern profile not applied yet)');
+  }
+
+  if (await tasksFileExists(folder)) {
+    lines.push('✓ .vscode/tasks.json present');
+  } else {
+    lines.push('○ .vscode/tasks.json missing — run Create Tasks or scaffold a project');
+  }
+
+  const gitUri = vscode.Uri.joinPath(folder.uri, '.git');
+  try {
+    await vscode.workspace.fs.stat(gitUri);
+    lines.push('✓ Git repository detected');
+  } catch {
+    lines.push('○ No .git directory');
+  }
+
+  const markers = ['package.json', 'pyproject.toml', 'index.html', '.gitignore'];
+  for (const rel of markers) {
+    try {
+      await vscode.workspace.fs.stat(vscode.Uri.joinPath(folder.uri, rel));
+      lines.push(`✓ ${rel}`);
+    } catch {
+      // silent for optional markers
+    }
   }
 
   const ai = readAiStatus();
